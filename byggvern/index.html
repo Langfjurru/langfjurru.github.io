@@ -69,4 +69,79 @@
 
         .status {
             display: inline-flex;
-            align
+            align-items: center;
+            gap: 9px;
+            margin-top: 30px;
+            padding: 10px 15px;
+            border-radius: 999px;
+            background: #edf4f0;
+            color: #31594d;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: #72c83c;
+            border-radius: 50%;
+        }
+
+        .back {
+            display: inline-block;
+            margin-top: 34px;
+            color: #31594d;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .back:hover {
+            text-decoration: underline;
+        }
+
+        .note {
+            margin-top: 28px;
+            padding-top: 22px;
+            border-top: 1px solid #e2e8e5;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #82908b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="card">
+
+        <div class="logo">B</div>
+
+        <div class="eyebrow">Byggvern</div>
+
+        <h1>Ny versjon kommer</h1>
+
+        <p>
+            Byggvern er under oppdatering. En ny versjon med fokus på
+            byggvern, åpne geodata og offentlig tilgjengelige kilder
+            publiseres her snart.
+        </p>
+
+        <div class="status">
+            <span class="dot"></span>
+            Under utvikling
+        </div>
+
+        <br>
+
+        <a class="back" href="/">
+            ← Tilbake til forsiden
+        </a>
+
+        <div class="note">
+            Dette er en prototype og ikke en offisiell publisert NTNU-tjeneste.
+        </div>
+
+    </main>
+
+</body>
+</html>
