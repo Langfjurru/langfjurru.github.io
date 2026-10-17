@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
-<meta name="app-version" content="2.4">
+<meta name="app-version" content="2.5">
 <meta name="description" content="Trondheim i 3D med levende AtB-busser, klikkbare holdeplasser og sanntidsavgangstavler fra Entur.">
-<title>Trondheim · 3D og sanntidskart · v2.4</title>
+<title>Trondheim · 3D og sanntidskart · v2.5</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -115,10 +115,13 @@ body.route-focus .ship-name-tag{visibility:hidden}
 @media(max-width:640px){.departure-card{left:9px;right:9px;width:auto;bottom:calc(10px + env(safe-area-inset-bottom, 0px));max-height:min(51dvh,440px);padding:12px 13px 10px;border-radius:18px}.departure-card::before{content:'';display:block;width:38px;height:4px;background:#d3dfe3;border-radius:6px;margin:0 auto 8px}.departure-row{padding:8px 0}.departure-header h3{font-size:15px}}
 
 /* v2.4 – touch-friendly Entur StopPlace markers drawn above the base map. */
-.transit-stop-touch{width:36px;height:36px;border:0;border-radius:12px;background:#fff;color:#0d7da9;box-shadow:0 3px 12px rgba(6,54,80,.28);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;outline:2px solid #1688b2;outline-offset:-4px}
-.transit-stop-touch:active{transform:scale(.95)}.transit-stop-touch:focus-visible{outline:3px solid #edb84e;outline-offset:1px}
-.transit-stop-touch svg{width:22px;height:22px;display:block}
-@media(max-width:640px){.transit-stop-touch{width:39px;height:39px}}
+/* v2.5: Kartzoom styrer BARE den visuelle storleiken. Den 36/39px store
+   trykkflata, Entur-kall og markorplassering er identiske med v2.4. */
+.transit-stop-touch{--stop-touch-size:36px;width:var(--stop-touch-size);height:var(--stop-touch-size);position:absolute;border:0;border-radius:12px;background:transparent;color:#0d7da9;box-shadow:none;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;outline:0}
+.transit-stop-touch::before{content:"";position:absolute;left:50%;top:50%;width:calc(var(--stop-touch-size) * var(--stop-icon-scale, 1));height:calc(var(--stop-touch-size) * var(--stop-icon-scale, 1));transform:translate(-50%,-50%);border-radius:calc(12px * var(--stop-icon-scale, 1));background:#fff;outline:2px solid #1688b2;outline-offset:-4px;box-shadow:0 3px 12px rgba(6,54,80,.28);pointer-events:none}
+.transit-stop-touch:active::before{filter:brightness(.96)}.transit-stop-touch:focus-visible{outline:3px solid #edb84e;outline-offset:1px}
+.transit-stop-touch svg{width:calc(22px * var(--stop-icon-scale, 1));height:calc(22px * var(--stop-icon-scale, 1));display:block;position:relative;z-index:1;pointer-events:none}
+@media(max-width:640px){.transit-stop-touch{--stop-touch-size:39px}}
 </style>
 </head>
 <body>
@@ -126,7 +129,7 @@ body.route-focus .ship-name-tag{visibility:hidden}
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.4</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.4">v2.4</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.5</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.5">v2.5</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · animert langs veg · GPS ca. kvart 10. sekund<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><span id="bus3d-status" class="state" role="status">Laster detaljerte 3D-busser …</span><input id="toggle-road" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"><input id="toggle-bus3d" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
@@ -160,7 +163,7 @@ body.route-focus .ship-name-tag{visibility:hidden}
  <div id="departure-list" class="departure-scroll"></div>
  <div class="departure-foot"><span>Entur · tider kan endre seg</span><span id="departure-updated">–</span></div>
 </section>
-<div class="bottom-credit"><b>3D Trondheim · v2.4</b><br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
+<div class="bottom-credit"><b>3D Trondheim · v2.5</b><br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
@@ -344,6 +347,14 @@ function toggleTerrain(active){
 }
 const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:AREAS.city.center,zoom:AREAS.city.zoom,bearing:AREAS.city.bearing,pitch:AREAS.city.pitch,maxPitch:80,canvasContextAttributes:{antialias:true},attributionControl:true});
 map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');map.addControl(new maplibregl.FullscreenControl(),'top-right');map.addControl(new maplibregl.ScaleControl({maxWidth:120,unit:'metric'}),'bottom-right');
+// v2.5: Skaler bare symbolgrafikken ved zoom. MapLibre beholdar markorens transform
+// og klikkflate, sa trykk pa haldeplassen framleis opnar den same avgangstavla.
+function updateStopIconScale(){
+ const z=map.getZoom(),scale=Math.max(.54,Math.min(1,.54+(z-13.25)*.20));
+ $('map').style.setProperty('--stop-icon-scale',scale.toFixed(3));
+}
+map.on('zoom',updateStopIconScale);
+updateStopIconScale();
 function setVisible(layer,on){if(state.ready&&map.getLayer(layer))map.setLayoutProperty(layer,'visibility',on?'visible':'none');}
 function point(c,p){return {type:'Feature',geometry:{type:'Point',coordinates:c},properties:p};}
 
