@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
-<meta name="app-version" content="2.7">
+<meta name="app-version" content="2.8">
 <meta name="description" content="Trondheim i 3D med levende AtB-busser, klikkbare holdeplasser og sanntidsavgangstavler fra Entur.">
-<title>Trondheim · 3D og sanntidskart · v2.7</title>
+<title>Trondheim · 3D og sanntidskart · v2.8</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -187,7 +187,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.7</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.7">v2.7</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.8</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.8">v2.8</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · animert langs veg · GPS ca. kvart 10. sekund<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><span id="bus3d-status" class="state" role="status">Laster detaljerte 3D-busser …</span><input id="toggle-road" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"><input id="toggle-bus3d" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
@@ -258,7 +258,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
     </details>
   </div>
 </aside>
-<div class="bottom-credit"><b>3D Trondheim · v2.7</b><br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
+<div class="bottom-credit"><b>3D Trondheim · v2.8</b><br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
@@ -896,7 +896,29 @@ function addDetailedBusSprite(){
 function addArt(name,fill,type){const c=document.createElement('canvas');c.width=64;c.height=64;const g=c.getContext('2d');g.translate(32,32);g.shadowColor='rgba(0,0,0,.25)';g.shadowBlur=4;g.shadowOffsetY=2;g.fillStyle=fill;g.strokeStyle='white';g.lineWidth=3;if(type==='bus'){g.beginPath();g.roundRect(-16,-25,32,50,9);g.fill();g.stroke();g.fillStyle='#252f39';g.fillRect(-11,-17,22,9);g.fillStyle='#fff4';g.fillRect(-10,4,20,4);g.fillStyle='#ffecc6';g.fillRect(-13,16,5,4);g.fillRect(8,16,5,4);}else{g.beginPath();g.moveTo(0,-26);g.bezierCurveTo(17,-15,17,13,10,24);g.lineTo(-10,24);g.bezierCurveTo(-17,13,-17,-15,0,-26);g.closePath();g.fill();g.stroke();g.shadowBlur=0;g.fillStyle='#c6edf4';g.fillRect(-9,-5,18,9);}try{map.addImage(name,g.getImageData(0,0,64,64),{pixelRatio:2});}catch(e){console.warn('Ikonfeil:',e);}}
 function registerClick(id,makeHtml){map.on('click',id,e=>{const f=e.features?.[0];if(!f)return;let at=f.geometry?.coordinates;if(!Array.isArray(at)||typeof at[0]!=='number')at=e.lngLat.toArray();new maplibregl.Popup({offset:12,maxWidth:'290px'}).setLngLat(at).setHTML(makeHtml(f.properties||{})).addTo(map);});map.on('mouseenter',id,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',id,()=>map.getCanvas().style.cursor='');}
 function popup(title,pairs){return '<div class="pop-title">'+htmlEscape(title)+'</div><div class="pop-kv">'+pairs.map(([a,b])=>'<span>'+htmlEscape(a)+'</span><span>'+htmlEscape(b)+'</span>').join('')+'</div>';}
+// v2.8: OpenFreeMap repeats road-reference shields (e.g. "6690") over short
+// line segments at street-level zoom. Keep them on overview maps, hide at close
+// zoom while retaining road names, bus route tags and stop icons.
+const ROAD_SHIELD_MAX_ZOOM = 15.6;
+function declutterRoadReferenceShields(){
+ if(state.mapMode!=='vector')return;
+ const style=map.getStyle();
+ if(!style || !Array.isArray(style.layers))return;
+ for(const layer of style.layers){
+  if(layer.type!=='symbol' || !/(?:highway[-_]shield|road[-_]shield|road[-_]ref|road[-_]number)/i.test(layer.id))continue;
+  try{
+   const from=Number.isFinite(layer.minzoom)?layer.minzoom:0;
+   const until=Number.isFinite(layer.maxzoom)?layer.maxzoom:24;
+   if(from<ROAD_SHIELD_MAX_ZOOM && until>ROAD_SHIELD_MAX_ZOOM){
+    map.setLayerZoomRange(layer.id,from,ROAD_SHIELD_MAX_ZOOM);
+   }else if(from>=ROAD_SHIELD_MAX_ZOOM){
+    map.setLayoutProperty(layer.id,'visibility','none');
+   }
+  }catch(err){console.warn('Kunne ikke redusere vegnummerskilt:',layer.id,err);}
+ }
+}
 function initMap(){
+ declutterRoadReferenceShields();
  roadGraph=null;roadGraphAt=0;roadGraphFocus=null;setRoadMatchStatus();
  for(const marker of stopLayerState.htmlMarkers.values())marker.remove();stopLayerState.htmlMarkers.clear();
  // Høyde-DEM kobles bare inn når brukeren velger 3D-terreng; svikt i DEM skal ikke stoppe bakgrunnskartet.
