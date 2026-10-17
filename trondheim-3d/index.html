@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
-<meta name="app-version" content="2.13">
+<meta name="app-version" content="2.14">
 <meta name="description" content="Trondheim i 3D med levende AtB-busser, klikkbare holdeplasser og sanntidsavgangstavler fra Entur.">
-<title>Trondheim · 3D og sanntidskart · v2.13</title>
+<title>Trondheim · 3D og sanntidskart · v2.14</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -123,63 +123,34 @@ body.route-focus .ship-name-tag{visibility:hidden}
 .transit-stop-touch svg{width:calc(22px * var(--stop-icon-scale, 1));height:calc(22px * var(--stop-icon-scale, 1));display:block;position:relative;z-index:1;pointer-events:none}
 @media(max-width:640px){.transit-stop-touch{--stop-touch-size:39px}}
 
-/* v2.7: Yr-kartmodul som separat, isolert værpanel. Kollektivlogikken er uendret. */
-.weather-fab{position:fixed;right:14px;bottom:108px;z-index:19;background:#fff;color:#234b61;display:flex;align-items:center;gap:7px;padding:12px 14px;border:1px solid #d6e4eb;border-radius:15px;box-shadow:0 6px 26px #19354638;font-weight:800;font-size:13px;line-height:1}
-.weather-fab:hover,.weather-fab:focus-visible{background:#eaf5fa;outline:2px solid #0c91b8;outline-offset:2px}
-.weather-fab .weather-icon{font-size:21px}
+/* v2.14: eget værvarsel i et lite hjørnekort; ingen ekstern iframe og ingen endring i kartmotor. */
+.weather-fab{position:fixed;right:12px;bottom:107px;z-index:19;display:flex;align-items:center;gap:10px;text-align:left;width:min(255px,calc(100vw - 24px));min-height:61px;padding:9px 12px;border:1px solid #cfdee5;border-radius:17px;background:rgba(255,255,255,.98);color:#203744;box-shadow:0 5px 22px rgba(13,42,59,.21);backdrop-filter:blur(12px);cursor:pointer}
+.weather-fab:hover,.weather-fab:focus-visible{outline:2px solid #0d86b1;outline-offset:2px}
+.weather-fab-icon{font-size:30px;line-height:1;flex:none;width:35px;text-align:center}
+.weather-fab-copy{display:flex;flex-direction:column;min-width:0;flex:1;gap:4px}
+.weather-fab-copy strong{font-size:12px;line-height:1.22;font-weight:800;white-space:normal;max-height:32px;overflow:hidden}
+.weather-fab-copy small{font-size:10px;line-height:1.1;color:#657680;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.weather-fab-arrow{font-size:16px;color:#6b8490;font-weight:700;align-self:center}
 .weather-shell[hidden]{display:none!important}
-.weather-shell{position:fixed;z-index:18;right:0;top:0;bottom:0;width:min(490px,38vw);background:#f9fbfc;border-left:1px solid #cedfe6;box-shadow:-7px 0 32px #152e3b33;display:flex;flex-direction:column;color:#20333c}
-.weather-head{background:white;padding:21px 20px 12px;border-bottom:1px solid #e6edef;flex:none}
-.weather-overline{font-size:10px;letter-spacing:1.1px;text-transform:uppercase;font-weight:850;color:#63818c}
-.weather-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:5px}
-.weather-top h2{font-size:23px;line-height:1.2;margin:0;color:#1e3540;letter-spacing:-.6px}
-.weather-close{flex:none;width:38px;height:38px;border:0;border-radius:12px;background:#eef2f3;font-size:23px;font-weight:800;color:#34434a}
-.weather-subtitle{font-size:12px;line-height:1.5;margin:8px 0 0;color:#59717c}
-.weather-tabs{display:flex;gap:7px;margin-top:15px}
-.weather-tabs button{flex:1;border:1px solid #dbe7eb;background:#f2f6f7;border-radius:11px;padding:11px 5px;font-size:12px;font-weight:850;color:#4c626c;min-height:40px}
-.weather-tabs button[aria-selected="true"]{border-color:#78afc2;background:#dff0f6;color:#12647f}
-.weather-content{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 12px 14px;gap:8px}
-.weather-iframe-wrap{flex:1;min-height:180px;border-radius:14px;background:#e5edf0;overflow:hidden;position:relative;border:1px solid #d8e3e7}
-.weather-iframe-wrap iframe{display:block;width:100%;height:100%;border:0;background:#eff4f6}
-.weather-iframe-wrap iframe[hidden]{display:none!important}
-.weather-setup{height:100%;width:100%;overflow:auto;background:linear-gradient(145deg,#f4fbff,#f8fbfc);color:#294150;display:grid;place-items:center;padding:18px 16px}
-.weather-setup[hidden]{display:none!important}
-.weather-setup-inner{max-width:390px;display:flex;flex-direction:column;align-items:center;gap:11px;text-align:center}
-.weather-setup-icon{font-size:38px;line-height:1}
-.weather-setup strong{font-size:18px;line-height:1.2}
-.weather-setup p{font-size:13px;line-height:1.52;color:#516572;margin:0}
-.weather-setup small{font-size:11px;line-height:1.45;color:#667d88}
-.weather-setup-inner a,.weather-setup-inner button{display:block;text-decoration:none;border-radius:12px;border:1px solid #b5d5e0;font-weight:800;font-size:13px;cursor:pointer;padding:11px 14px;width:min(100%,290px)}
-.weather-setup-inner .weather-open-button{background:#11779b;color:white;border-color:#11779b}
-.weather-setup-inner button{background:white;color:#16647d}
-
-.weather-note{font-size:11px;line-height:1.42;color:#576d77;margin:0;padding:0 2px}
-.weather-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;padding:4px 2px}
-.weather-links a{font-size:11px;font-weight:750;color:#006e93;text-decoration:underline;text-underline-offset:3px}
-.weather-settings{border-radius:11px;background:#f1f5f6;border:1px solid #e0e9ed;padding:0 10px}
-.weather-settings summary{list-style:none;cursor:pointer;font-size:11px;font-weight:750;color:#48636f;padding:9px 0}
-.weather-settings summary::-webkit-details-marker{display:none}
-.weather-settings .config-wrap{padding-bottom:10px;display:grid;gap:7px}
-.weather-settings label{font-size:10px;color:#607782}
-.weather-settings input{width:100%;border:1px solid #cbdce2;background:#fff;border-radius:9px;padding:9px 10px;font-size:12px;color:#253e4a}
-.weather-settings button{border:0;border-radius:9px;background:#176784;color:white;padding:10px 14px;font-size:12px;font-weight:850;cursor:pointer}
-.weather-settings .config-status{font-size:10px;margin:0;color:#576c77}
-body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
-@media(min-width:850px){body.weather-open #map{right:min(490px,38vw)}body.weather-open .maplibregl-ctrl-top-right{right:14px}}
-@media(max-width:849px){
- .weather-fab{right:10px;bottom:96px;padding:11px 13px}
- .weather-shell{top:auto;left:0;right:0;bottom:0;width:100vw;height:min(76dvh,730px);border-left:0;border-radius:24px 24px 0 0;border-top:1px solid #d1dfe4;box-shadow:0 -10px 38px #152d3f50}
- .weather-head{padding:13px 15px 10px;border-radius:24px 24px 0 0}
- .weather-head::before{content:'';width:36px;height:4px;border-radius:4px;background:#cddce1;display:block;margin:0 auto 9px}
- .weather-top h2{font-size:21px}
- .weather-tabs{margin-top:11px}
- .weather-content{padding:9px 10px calc(9px + env(safe-area-inset-bottom,0px))}
- .weather-fab.weather-visible{bottom:calc(min(76dvh,730px) + 8px);right:11px}
- body.weather-open .weather-fab{right:11px}
- .weather-iframe-wrap{min-height:220px}
- .weather-note{font-size:10px}
-}
-@media(max-width:360px){.weather-shell{height:80dvh}.weather-tabs button{font-size:11px;padding:9px 3px}}
+.weather-shell{position:fixed;right:12px;bottom:180px;z-index:19;width:min(330px,calc(100vw - 24px));max-height:min(68dvh,480px);overflow:auto;border:1px solid #d6e4e8;border-radius:18px;padding:15px 15px 12px;background:rgba(255,255,255,.99);box-shadow:0 14px 40px rgba(16,39,51,.24);color:#243945;overscroll-behavior:contain}
+.weather-top{display:flex;gap:12px;justify-content:space-between;align-items:flex-start}
+.weather-overline{font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:#66818e;font-weight:850}
+.weather-top h2{margin:6px 0 0;font-size:19px;line-height:1.2;letter-spacing:-.45px}
+.weather-close{flex:none;min-width:32px;height:32px;border:0;border-radius:9px;font-size:22px;background:#eef3f4;color:#344e5b;cursor:pointer}
+.weather-summary{font-size:12.5px;line-height:1.45;margin:8px 0 12px;color:#465b66}
+.weather-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.weather-stat{background:#f1f6f8;border:1px solid #e6eff2;padding:10px 7px;border-radius:10px;display:flex;flex-direction:column;gap:5px;align-items:center;text-align:center}
+.weather-stat b{font-size:16px;font-variant-numeric:tabular-nums;line-height:1.15}
+.weather-stat span{font-size:10px;color:#617784}
+.weather-advice{font-size:12px;line-height:1.4;color:#2e5864;background:#eaf6f7;padding:9px 11px;border-radius:10px;margin:11px 0 10px}
+.weather-hours{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:8px 0}
+.weather-hour{background:#fafcfd;border:1px solid #e6edef;border-radius:9px;padding:8px 4px;display:grid;justify-items:center;gap:4px;text-align:center}
+.weather-hour span{font-size:11px;font-weight:700}.weather-hour small{font-size:10px;color:#526a78}.weather-hour i{font-style:normal;font-size:20px}
+.weather-foot{display:flex;justify-content:space-between;gap:6px;align-items:center;border-top:1px solid #e8edef;padding-top:9px;margin-top:10px;color:#70818b;font-size:10px;line-height:1.3}
+.weather-foot a{color:#0d7490;text-decoration:underline;text-underline-offset:2px}
+.weather-update{background:#eef3f5;border:none;border-radius:8px;color:#285a6c;padding:6px 9px;font-size:11px;font-weight:750;cursor:pointer}
+@media(max-width:640px){.weather-fab{right:10px;bottom:104px;width:min(240px,calc(100vw - 20px))}.weather-shell{right:9px;bottom:175px;width:min(310px,calc(100vw - 18px));max-height:min(62dvh,415px);padding:13px}}
+@media(max-width:355px){.weather-fab{width:218px}.weather-shell{max-height:55dvh}}
 </style>
 </head>
 <body>
@@ -187,7 +158,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar collapsed" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.13</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.13">v2.13</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.14</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.14">v2.14</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · animert langs veg · GPS ca. kvart 10. sekund<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><span id="bus3d-status" class="state" role="status">Laster detaljerte 3D-busser …</span><input id="toggle-road" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"><input id="toggle-bus3d" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
@@ -222,43 +193,21 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
  <div class="departure-foot"><span>Entur · tider kan endre seg</span><span id="departure-updated">–</span></div>
 </section>
 
-<!-- v2.7: Værvisningen er en ekstern Yr-modul og påvirker ikke busskartets lag. -->
-<button type="button" id="weather-launch" class="weather-fab" aria-controls="weather-shell" aria-expanded="false" title="Vis Yr værkart for Trondheim"><span class="weather-icon" aria-hidden="true">🌦</span><span>Yr vær</span></button>
-<aside class="weather-shell" id="weather-shell" aria-label="Værvarsel fra Yr, Trondheim" hidden>
-  <header class="weather-head">
-    <div class="weather-overline">Værkart fra Yr · Trondheim</div>
-    <div class="weather-top"><h2>Planlegg dagen</h2><button class="weather-close" id="weather-close" type="button" title="Lukk værkart" aria-label="Lukk værkart">×</button></div>
-    <p class="weather-subtitle">Sjekk temperaturen og nedbøren før du går til bussen. Værkartet er separat fra sanntidskartet.</p>
-    <div class="weather-tabs" role="tablist" aria-label="Velg værkart">
-      <button id="weather-temp" type="button" role="tab" aria-selected="true">🌡 Temperatur</button>
-      <button id="weather-rain" type="button" role="tab" aria-selected="false">🌧 Nedbør</button>
-    </div>
-  </header>
-  <div class="weather-content">
-    <div class="weather-iframe-wrap">
-      <iframe id="weather-frame" title="Yr animert værkart Trondheim" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-      <div id="weather-setup" class="weather-setup" hidden>
-        <div class="weather-setup-inner">
-          <span class="weather-setup-icon" aria-hidden="true">🌧️</span>
-          <strong>Nedbørskart fra Yr</strong>
-          <p>Den tidligere lenken gav 404. Vi viser ikke lenger en ugyldig Yr-modul. For å bygge inn nedbørskartet trenger vi koden som Yr selv genererer.</p>
-          <a class="weather-open-button" href="https://www.yr.no/nb/" target="_blank" rel="noopener noreferrer">Se nedbør på Yr ↗</a>
-          <button id="weather-setup-code" type="button">Legg inn nedbørsmodul fra Yr</button>
-          <small>Velg «Kart» og deretter «Nedbør» på Yr. I modulbyggeren velger du Trondheim og «Vis kode».</small>
-        </div>
-      </div>
-    </div>
-    <p class="weather-note" id="weather-note">Yr oppdaterer værkartene automatisk. Bruk tidslinjen inne i kartet. Dersom Yr begrenser innbyggingen i nettleseren din, åpne kartet direkte.</p>
-    <div class="weather-links"><a id="weather-open-yr" href="https://www.yr.no/nb/" target="_blank" rel="noopener noreferrer">Åpne kartet hos Yr ↗</a><a href="https://www.yr.no/nb/moduler" target="_blank" rel="noopener noreferrer">Yrs modulbygger ↗</a></div>
-    <details class="weather-settings" id="weather-settings"><summary>Legg inn Yr-modul fra «Vis kode»</summary>
-      <div class="config-wrap"><label for="weather-url">Lim inn moduladresse eller innbyggingskode fra «Vis kode» på Yr</label>
-      <input id="weather-url" type="text" placeholder="https://moduler.yr.no/nb/kart/..." autocomplete="off" spellcheck="false">
-      <button id="weather-save" type="button">Bruk denne Yr-modulen</button>
-      <p class="config-status" id="weather-config-status">Bare adresser fra moduler.yr.no er tillatt. Valget lagres kun på denne enheten.</p></div>
-    </details>
-  </div>
-</aside>
-<div class="bottom-credit"><b>3D Trondheim · v2.13</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
+<!-- v2.14: kompakt værvarsel med åpne data fra Meteorologisk institutt. -->
+<button type="button" id="weather-launch" class="weather-fab" aria-controls="weather-shell" aria-expanded="false" title="Se værvarsel for Trondheim sentrum">
+ <span class="weather-fab-icon" id="weather-mini-icon" aria-hidden="true">🌤️</span>
+ <span class="weather-fab-copy"><strong id="weather-short">Henter værvarsel …</strong><small id="weather-mini-temp">Trondheim · MET</small></span>
+ <span class="weather-fab-arrow" aria-hidden="true">⌃</span>
+</button>
+<section class="weather-shell" id="weather-shell" aria-label="Værvarsel for Trondheim" hidden>
+ <header class="weather-top"><div><div class="weather-overline">Værvarsel · Trondheim sentrum</div><h2 id="weather-title">Henter værvarsel …</h2></div><button class="weather-close" id="weather-close" type="button" aria-label="Lukk værvarsel">×</button></header>
+ <p class="weather-summary" id="weather-summary" aria-live="polite">Henter temperatur, nedbør og vind fra Meteorologisk institutt.</p>
+ <div class="weather-stats"><div class="weather-stat"><span>Temperatur nå</span><b id="weather-temperature">–</b></div><div class="weather-stat"><span>Nedbør neste timer</span><b id="weather-rain">–</b></div><div class="weather-stat"><span>Vind</span><b id="weather-wind">–</b></div></div>
+ <p class="weather-advice" id="weather-advice">Oppdateres automatisk når værdata er tilgjengelige.</p>
+ <div id="weather-hours" class="weather-hours" aria-label="Kommende timer"></div>
+ <footer class="weather-foot"><span id="weather-updated">Kilde: <a href="https://www.met.no/" target="_blank" rel="noopener noreferrer">MET Norge</a> · bearbeidet prognose · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></span><button id="weather-refresh" class="weather-update" type="button" aria-label="Oppdater værmelding">↻ Oppdater</button></footer>
+</section>
+<div class="bottom-credit"><b>3D Trondheim · v2.14</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
@@ -723,7 +672,7 @@ function busAnimationFrame(now){
 // 3D BUS MODEL (v2.4). Shared procedural mesh, no external asset URLs or model licences.
 // Visual LOD only: real-world sized 3D buses at close zoom; smaller, proportional
 // vector-sprite buses at neighbourhood/city zoom. No GPS/route/AIS logic changed.
-// v2.13: Use the SAME detailed three-dimensional mesh much farther out.
+// v2.14: Use the SAME detailed three-dimensional mesh much farther out.
 // The slim road-aligned bus illustration remains a fallback for far overviews
 // and devices on which the 3D renderer cannot run. Keep natural proportions:
 // no giant screen-facing billboards. Only visual LOD has been changed.
@@ -957,7 +906,7 @@ function initMap(){
  map.addLayer({id:'stopplace-halo',type:'circle',source:'stopplace-data',minzoom:13.65,paint:{'circle-radius':['interpolate',['linear'],['zoom'],13.65,8,16,11],'circle-color':'#ffffff','circle-stroke-color':'#aedbe9','circle-stroke-width':1.4,'circle-opacity':0.02}});
  map.addLayer({id:'stopplace-markers',type:'circle',source:'stopplace-data',minzoom:13.65,paint:{'circle-radius':['interpolate',['linear'],['zoom'],13.65,4.6,16,6.5],'circle-color':'#1686b6','circle-stroke-color':'#ffffff','circle-stroke-width':1.4,'circle-opacity':0.02}});
  map.addLayer({id:'bus-select-hit',type:'circle',source:'bus-data',paint:{'circle-color':'#fff','circle-opacity':.004,'circle-radius':['interpolate',['linear'],['zoom'],10,10,16,22]}});
- // v2.13: Slender bus silhouette lies in the road plane, rather than floating as a large upright billboard.
+ // v2.14: Slender bus silhouette lies in the road plane, rather than floating as a large upright billboard.
  // The close-zoom Three.js model remains physically sized in metres.
  map.addLayer({id:'bus-vehicles',type:'symbol',source:'bus-data',layout:{'icon-image':'red-bus','icon-size':BUS_ICON_ZOOM_SCALE,'icon-rotate':['get','bearing'],'icon-pitch-alignment':'map','icon-rotation-alignment':'map','icon-allow-overlap':true}});
  // Rutenummer vises med separate HTML-merkelapper over busssymbolene (uavhengig av kartstilens fonter).
@@ -1328,74 +1277,146 @@ window.addEventListener('visibilitychange',()=>{if(document.hidden){if(busRaf)ca
 });
 </script>
 <script>
-/* Isolert Yr-integrasjon v2.7: fjerner uverifisert nedbørs-iframe, bevarer resten av appen. */
+/* v2.14: kompakt, databasert værtekst for Trondheim sentrum. Kollektivkartets JS er urørt. */
 (function(){
 'use strict';
-const E=id=>document.getElementById(id);
-const opener=E('weather-launch'),shell=E('weather-shell'),frame=E('weather-frame'),tabs=[E('weather-temp'),E('weather-rain')];
-const setup=E('weather-setup'),frameWrap=frame.parentElement;
-const srcBase='https://moduler.yr.no/nb/kart/';
-// Bare temperatur har en dokumentert, offentlig moduladresse. Nedbør krever Yr-generert iframe-kode.
-const bounds='63.49%2C10.59%2C63.36%2C10.21';
-const defaults={temperature:srcBase+'temperatur/?bounds='+bounds+'&play=&speed=2',rain:null};
-const YR_HOME='https://www.yr.no/nb/';
-let active='temperature';
-const getStored=key=>{try{return localStorage.getItem('trondheimYrModule:'+key);}catch(_){return null;}};
-const store=(key,url)=>{try{localStorage.setItem('trondheimYrModule:'+key,url);}catch(_){}};
-function safeUrl(input){
- let raw=String(input||'').trim();
- const match=raw.match(/(?:src\s*=\s*["'])(https?:[^"']+)(?:["'])/i);
- if(match)raw=match[1];
- raw=raw.replace(/&amp;/g,'&');
- try{
-   const u=new URL(raw);
-   if(u.protocol!=='https:'||u.hostname!=='moduler.yr.no')return null;
-   // Avvis den kjente døde URL-en fra v2.6, også dersom den ble lagret lokalt.
-   if(/^\/nb\/kart\/nedbor\/?$/i.test(u.pathname))return null;
-   return u.href;
- }catch(_){return null;}
+const get=id=>document.getElementById(id);
+const openButton=get('weather-launch'),panel=get('weather-shell');
+const url='https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.4305&lon=10.3951';
+const cacheKey='trondheim3d:met-locationforecast:v2.14';
+const refreshMs=30*60*1000;
+const osloHour=new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',hour:'2-digit',hourCycle:'h23'});
+let latest=null,pending=null,nextAllowed=0;
+function num(value){const n=Number(value);return Number.isFinite(n)?n:null;}
+function round(value){return Number.isFinite(value)?Math.round(value):null;}
+function set(id,value){get(id).textContent=value;}
+function emoji(code){
+ const c=String(code||'').toLowerCase();
+ if(c.includes('thunder'))return '⛈️';
+ if(c.includes('sleet'))return '🌨️';
+ if(c.includes('snow'))return '❄️';
+ if(c.includes('rain'))return '🌧️';
+ if(c.includes('fog'))return '🌫️';
+ if(c.includes('cloudy')&&!c.includes('partly'))return '☁️';
+ if(c.includes('partlycloudy'))return '⛅';
+ if(c.includes('clearsky')||c.includes('fair'))return c.includes('night')?'🌙':'☀️';
+ return '🌤️';
 }
-function resizeMap(){window.dispatchEvent(new Event('resize'));try{window.trondheimResizeForYr?.();}catch(_){} }
-function select(kind){
- active=kind;
- tabs[0].setAttribute('aria-selected',String(kind==='temperature'));
- tabs[1].setAttribute('aria-selected',String(kind==='rain'));
- const custom=safeUrl(getStored(kind));
- const url=custom||defaults[kind];
- const missing=!url;
- setup.hidden=!missing;
- frame.hidden=missing;
- if(missing){frame.removeAttribute('src');} else if(frame.getAttribute('src')!==url){frame.setAttribute('src',url);}
- E('weather-open-yr').href=url||YR_HOME;
- E('weather-open-yr').textContent=missing?'Åpne Yr og velg nedbør ↗':'Åpne kartet hos Yr ↗';
- E('weather-note').textContent=missing
-  ? 'En gyldig innbyggingsadresse for Yrs nedbørskart må hentes via «Vis kode» i modulbyggeren. Den forrige antatte adressen gav 404 og er fjernet.'
-  : 'Yr oppdaterer værkartene automatisk. Juster tiden i Yr-modulen. Om innbyggingen blokkeres, velg «Åpne kartet hos Yr».';
- E('weather-url').value=custom||'';
- E('weather-config-status').textContent=custom?'Tilpasset Yr-modul er aktiv for dette kartlaget.':'Bruk «Vis kode» fra yr.no/nb/moduler og lim inn hele iframe-koden her. Koden lagres lokalt på denne enheten.';
+function sky(code){
+ const c=String(code||'').toLowerCase();
+ if(c.includes('thunder'))return 'torden';
+ if(c.includes('sleet'))return 'sludd';
+ if(c.includes('snow'))return 'snø';
+ if(c.includes('rain'))return 'regn';
+ if(c.includes('fog'))return 'tåke';
+ if(c.includes('partlycloudy'))return 'delvis skyet';
+ if(c.includes('cloudy'))return 'overskyet';
+ if(c.includes('fair')||c.includes('clearsky'))return 'klart';
+ return 'varierende skydekke';
 }
-function toggle(open){
- shell.hidden=!open;
- document.body.classList.toggle('weather-open',open);
- opener.classList.toggle('weather-visible',open);
- opener.setAttribute('aria-expanded',String(open));
- if(open){if(window.innerWidth<=849){const pane=E('panel'),collapse=E('collapse');if(pane&&!pane.classList.contains('collapsed')&&collapse)collapse.click();}select(active);E('weather-close').focus();}
- else opener.focus();
- resizeMap();window.setTimeout(resizeMap,180);
+function parse(json){
+ const ts=json?.properties?.timeseries;
+ if(!Array.isArray(ts)||!ts.length)throw Error('Ingen prognosedata');
+ const rows=ts.map(x=>({
+  at:Date.parse(x.time),
+  temp:num(x.data?.instant?.details?.air_temperature),
+  wind:num(x.data?.instant?.details?.wind_speed),
+  rain:num(x.data?.next_1_hours?.details?.precipitation_amount),
+  code:x.data?.next_1_hours?.summary?.symbol_code||x.data?.next_6_hours?.summary?.symbol_code||''
+ })).filter(x=>Number.isFinite(x.at));
+ const now=Date.now();
+ const usable=rows.filter(x=>x.at>=now-65*60000&&x.at<now+13*3600000&&Number.isFinite(x.temp));
+ if(!usable.length)throw Error('Ingen gyldig prognose for kommende timer');
+ return {rows:usable,issued:json.properties?.meta?.updated_at||null};
 }
-opener.addEventListener('click',()=>toggle(shell.hidden));
-E('weather-close').addEventListener('click',()=>toggle(false));
-tabs[0].addEventListener('click',()=>select('temperature'));
-tabs[1].addEventListener('click',()=>select('rain'));
-E('weather-setup-code').addEventListener('click',()=>{E('weather-settings').open=true;E('weather-settings').scrollIntoView({behavior:'smooth',block:'nearest'});E('weather-url').focus();});
-E('weather-save').addEventListener('click',()=>{
- const url=safeUrl(E('weather-url').value);
- if(!url){E('weather-config-status').textContent='Ugyldig eller tidligere feilende adresse. Lim inn den offisielle iframe-koden fra «Vis kode» på yr.no/nb/moduler.';return;}
- store(active,url);select(active);
- E('weather-config-status').textContent='Yr-modulen er lagt inn på denne enheten.';
- E('weather-settings').open=false;
-});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!shell.hidden)toggle(false);});
+function describe(data){
+ const now=Date.now(),here=Number(osloHour.format(new Date(now)));
+ const horizon=data.rows.filter(r=>r.at<=now+8*3600000&&r.rain!==null).slice(0,8);
+ const rows=horizon.length?horizon:data.rows.slice(0,8);
+ const totalRain=rows.reduce((a,r)=>a+(r.rain||0),0);
+ const rainy=rows.filter(r=>(r.rain||0)>=.2||/rain|sleet|snow/i.test(r.code));
+ const snowy=rows.filter(r=>/snow|sleet/i.test(r.code)).length;
+ const cloudy=rows.filter(r=>/cloudy|fog/i.test(r.code)).length;
+ const sunny=rows.filter(r=>/fair|clearsky/i.test(r.code)).length;
+ const temps=rows.map(r=>r.temp).filter(Number.isFinite),winds=rows.map(r=>r.wind).filter(Number.isFinite);
+ const context=here>=22||here<5?'i natt':here>=18?'i kveld':'i dag';
+ let lead,detail,icon;
+ if(snowy>=2){lead='Snøbyger '+context;detail='Prognosen viser snø eller sludd i perioder de neste timene.';icon='🌨️';}
+ else if(rainy.length>=Math.max(2,Math.ceil(rows.length*.45))||totalRain>=1.5){lead='Det blir regn '+context;detail='Nedbør er ventet i flere perioder de neste timene.';icon='🌧️';}
+ else if(rainy.length){lead='Enkelte regnbyger '+context;detail='Prognosen viser for det meste opphold, men enkelte perioder med regn.';icon='🌦️';}
+ else if(cloudy>=Math.max(2,Math.ceil(rows.length*.65))){lead='Stort sett overskyet '+context;detail='Mest skyet vær og lite eller ingen nedbør i prognosen.';icon='☁️';}
+ else if(sunny>=Math.max(2,Math.ceil(rows.length*.6))){lead=here>=20||here<5?'For det meste klart vær':'Mye opphold og sol';detail='Det ventes stort sett oppholdsvær de neste timene.';icon=here>=20||here<5?'🌙':'☀️';}
+ else{lead='Vekslende skydekke '+context;detail='Variert skydekke, men lite nedbør i prognosen.';icon='⛅';}
+ const current=data.rows[0];
+ let advice='Sjekk temperaturen før du går til bussen.';
+ if(totalRain>=.5||snowy>=2)advice='Ta gjerne med regnjakke og klær som tåler nedbør.';
+ else if(temps.length&&Math.min(...temps)<3)advice='Det blir kjølig. Kle deg varmt til bussturen.';
+ else if(winds.length&&Math.max(...winds)>=10)advice='Det kan bli vindfullt. Velg gjerne en vindtett jakke.';
+ const hours=[0,2,5].map(h=>{const target=now+h*3600000;return data.rows.reduce((a,b)=>Math.abs(b.at-target)<Math.abs(a.at-target)?b:a,data.rows[0]);});
+ const unique=hours.filter((h,i,a)=>a.findIndex(x=>x.at===h.at)===i);
+ return {lead,detail,icon,advice,totalRain,first:current,hours:unique};
+}
+function render(data,fromCache=false){
+ latest=data;
+ const d=describe(data),now=data.rows[0];
+ set('weather-mini-icon',d.icon);
+ set('weather-short',d.lead);
+ set('weather-mini-temp',`${round(now.temp)} °C · Trondheim · MET`);
+ set('weather-title',d.lead);
+ set('weather-summary',d.detail+' Værvarselet gjelder Trondheim sentrum, ikke hver enkelt gate.');
+ set('weather-temperature',`${round(now.temp)} °C`);
+ set('weather-rain',`${Math.round(d.totalRain*10)/10} mm`);
+ set('weather-wind',Number.isFinite(now.wind)?`${Math.round(now.wind)} m/s`:'–');
+ set('weather-advice',d.advice);
+ const root=get('weather-hours');root.replaceChildren();
+ for(const [idx,row] of d.hours.entries()){
+  const box=document.createElement('div');box.className='weather-hour';
+  const time=document.createElement('span');time.textContent=idx===0?'Nå':new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',hour:'2-digit',minute:'2-digit'}).format(new Date(row.at));
+  const ic=document.createElement('i');ic.textContent=emoji(row.code);
+  const val=document.createElement('small');val.textContent=`${round(row.temp)} °C · ${sky(row.code)}`;
+  box.append(time,ic,val);root.appendChild(box);
+ }
+ const updated=data.issued?new Date(data.issued):new Date();
+ const updateText=Number.isFinite(updated.getTime())?new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',hour:'2-digit',minute:'2-digit'}).format(updated):'ukjent';
+ get('weather-updated').textContent=`MET · oppdatert ${updateText}${fromCache?' · mellomlagret':''} · bearbeidet prognose`;
+ const credits=document.createElement('a');credits.href='https://api.met.no/';credits.target='_blank';credits.rel='noopener noreferrer';credits.textContent='Kilde';get('weather-updated').append(' · ',credits);
+ const cc=document.createElement('a');cc.href='https://creativecommons.org/licenses/by/4.0/';cc.target='_blank';cc.rel='noopener noreferrer';cc.textContent='CC BY 4.0';get('weather-updated').append(' · ',cc);
+}
+function showError(err){
+ if(latest){set('weather-advice','Kunne ikke hente nye værdata. Viser sist lagrede prognose.');return;}
+ set('weather-short','Værmelding utilgjengelig');set('weather-mini-temp','Trykk for å prøve igjen');
+ set('weather-title','Kunne ikke hente været');
+ set('weather-summary','Værdata fra MET er midlertidig utilgjengelige. Kontroller nettforbindelsen og prøv igjen.');
+ set('weather-advice','Ingen prognose vises før faktiske værdata er mottatt.');
+}
+function readCache(){
+ try{const value=JSON.parse(localStorage.getItem(cacheKey)||'null');if(!value||!value.data||!Number.isFinite(value.saved))return null;return value;}catch(_){return null;}
+}
+function saveCache(data){try{localStorage.setItem(cacheKey,JSON.stringify({saved:Date.now(),data}));}catch(_){}}
+async function refresh(force=false){
+ if(pending)return pending;
+ const cache=readCache();
+ if(cache?.data&&!latest){render(cache.data,true);}
+ if(!force&&cache&&Date.now()-cache.saved<refreshMs){return;}
+ if(!force&&Date.now()<nextAllowed)return;
+ nextAllowed=Date.now()+120000;
+ pending=(async()=>{
+  try{
+   const response=await fetch(url,{mode:'cors',credentials:'omit'});
+   if(!response.ok)throw Error('HTTP '+response.status);
+   const data=parse(await response.json());render(data,false);saveCache(data);
+  }catch(err){console.warn('MET-varsel:',err);showError(err);}
+  finally{pending=null;}
+ })();
+ return pending;
+}
+function toggle(open){panel.hidden=!open;openButton.setAttribute('aria-expanded',String(open));if(open){refresh();} }
+openButton.addEventListener('click',()=>toggle(panel.hidden));
+get('weather-close').addEventListener('click',()=>{toggle(false);openButton.focus();});
+get('weather-refresh').addEventListener('click',()=>refresh(true));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden)toggle(false);});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
+refresh();
 })();
 </script>
 </body>
