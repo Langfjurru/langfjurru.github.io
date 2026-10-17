@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
-<meta name="app-version" content="2.14">
+<meta name="app-version" content="2.15">
 <meta name="description" content="Trondheim i 3D med levende AtB-busser, klikkbare holdeplasser og sanntidsavgangstavler fra Entur.">
-<title>Trondheim · 3D og sanntidskart · v2.14</title>
+<title>Trondheim · 3D og sanntidskart · v2.15</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -123,7 +123,7 @@ body.route-focus .ship-name-tag{visibility:hidden}
 .transit-stop-touch svg{width:calc(22px * var(--stop-icon-scale, 1));height:calc(22px * var(--stop-icon-scale, 1));display:block;position:relative;z-index:1;pointer-events:none}
 @media(max-width:640px){.transit-stop-touch{--stop-touch-size:39px}}
 
-/* v2.14: eget værvarsel i et lite hjørnekort; ingen ekstern iframe og ingen endring i kartmotor. */
+/* v2.15: eget værvarsel i et lite hjørnekort; ingen ekstern iframe og ingen endring i kartmotor. */
 .weather-fab{position:fixed;right:12px;bottom:107px;z-index:19;display:flex;align-items:center;gap:10px;text-align:left;width:min(255px,calc(100vw - 24px));min-height:61px;padding:9px 12px;border:1px solid #cfdee5;border-radius:17px;background:rgba(255,255,255,.98);color:#203744;box-shadow:0 5px 22px rgba(13,42,59,.21);backdrop-filter:blur(12px);cursor:pointer}
 .weather-fab:hover,.weather-fab:focus-visible{outline:2px solid #0d86b1;outline-offset:2px}
 .weather-fab-icon{font-size:30px;line-height:1;flex:none;width:35px;text-align:center}
@@ -151,6 +151,15 @@ body.route-focus .ship-name-tag{visibility:hidden}
 .weather-update{background:#eef3f5;border:none;border-radius:8px;color:#285a6c;padding:6px 9px;font-size:11px;font-weight:750;cursor:pointer}
 @media(max-width:640px){.weather-fab{right:10px;bottom:104px;width:min(240px,calc(100vw - 20px))}.weather-shell{right:9px;bottom:175px;width:min(310px,calc(100vw - 18px));max-height:min(62dvh,415px);padding:13px}}
 @media(max-width:355px){.weather-fab{width:218px}.weather-shell{max-height:55dvh}}
+
+/* v2.15: Frivillig utforsking av AtBs regionbusser. Lukket ved oppstart. */
+.atb-regions{margin:-4px 0 13px;border:1px solid #dce7e9;border-radius:12px;background:#f8fafb;padding:0}
+.atb-regions summary{cursor:pointer;padding:11px 12px;font-size:12px;font-weight:800;color:#264b59;list-style-position:inside}
+.atb-regions summary::marker{color:#2685a5}
+.atb-regions .atb-region-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:0 10px 10px}
+.atb-region-grid button{min-height:36px;text-align:center;border:1px solid #d6e5e9;background:white;color:#285b67;font:inherit;font-size:12px;font-weight:750;border-radius:9px;padding:8px 4px}
+.atb-region-grid button:active{background:#dceff4}
+.atb-regions p{margin:0;padding:0 11px 10px;color:#657b80;font-size:11px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -158,10 +167,23 @@ body.route-focus .ship-name-tag{visibility:hidden}
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar collapsed" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.14</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.14">v2.14</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.15</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.15">v2.15</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
-   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · animert langs veg · GPS ca. kvart 10. sekund<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><span id="bus3d-status" class="state" role="status">Laster detaljerte 3D-busser …</span><input id="toggle-road" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"><input id="toggle-bus3d" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
+   <details class="atb-regions"><summary>Utforsk AtB i hele Trøndelag</summary>
+    <div class="atb-region-grid">
+     <button type="button" data-atb-region="trondelag">Hele Trøndelag</button>
+     <button type="button" data-atb-region="fosen">Fosen</button>
+     <button type="button" data-atb-region="innherred">Innherred</button>
+     <button type="button" data-atb-region="namdalen">Namdalen</button>
+     <button type="button" data-atb-region="oyregionen">Hitra og Frøya</button>
+     <button type="button" data-atb-region="orkdal">Orkdalsregionen</button>
+     <button type="button" data-atb-region="vernes">Stjørdal og Meråker</button>
+     <button type="button" data-atb-region="sor">Oppdal og Røros</button>
+    </div>
+    <p>Flytt eller zoom kartet hvor som helst i Trøndelag. Bare rapporterte AtB-busser i kartutsnittet hentes fra Entur. GPS-data kan mangle for enkelte regionruter.</p>
+   </details>
+   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · hele Trøndelag · GPS ca. kvart 10. sekund<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><span id="bus3d-status" class="state" role="status">Laster detaljerte 3D-busser …</span><input id="toggle-road" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"><input id="toggle-bus3d" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-stops" type="checkbox" checked aria-label="Vis holdeplasser og avgangstavler"><div><div class="layer-name"><span class="pict" style="width:22px;height:22px;background:#dceef8;color:#167cad;font-size:15px">▣</span>Holdeplasser</div><div class="layer-note">Trykk på det blå holdeplassikonet for live avgangstavle.<br><span class="helper" id="stops-status">Vises når du zoomer inn</span></div></div></div><div class="data-right"><span class="num" id="count-stops">–</span></div></div>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-build" type="checkbox" checked aria-label="Vis 3D-bygninger"><div><div class="layer-name"><span class="pict" style="width:22px;height:22px;background:#dedbd4;font-size:15px">▥</span>3D-bygninger</div><div class="layer-note">OSM · åpne bygningshøyder</div></div></div><div class="data-right"><span class="state" id="build-status">På</span></div></div>
    <div class="buttons"><button id="follow" class="action primary" type="button" disabled>Følg en buss</button><button id="home" class="action" type="button">Til sentrum</button></div>
@@ -173,7 +195,7 @@ body.route-focus .ship-name-tag{visibility:hidden}
    </details>
    <div class="smallbuttons"><button id="refresh" class="link-button" type="button">↻ Oppdater kilder</button><span style="font-size:11px;color:#657681" id="refreshed">Venter på oppdatering</span></div>
    <div class="diagnostics" aria-live="polite"><div class="statusline" id="global-status"><span class="live"></span> Initialiserer kartet …</div><div class="api-grid"><span>Entur / busser</span><span id="state-bus" class="pending">Venter</span><span>Allemannsdata / AIS-posisjoner</span><span id="state-ais" class="pending">Av · valgfritt</span><span>Allemannsdata / trafikk</span><span id="state-traffic" class="pending">Av</span></div><p class="info">Trykk på en buss eller et rutenummer for å vise hele den planlagte ruta. Fartøy og andre datalag aktiveres under «Andre kartlag» ved behov.</p></div>
-   <details><summary>Om kartet og datakildene</summary><p>Bakgrunnskart: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> / OpenStreetMap. 3D-terreng: <a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener">Mapterhorn</a>. Bygninger: OSM-høyder (ikke Kartverkets NHM-modell). Busser: <a href="https://developer.entur.no/docs/open-services/vehicle-positions" target="_blank" rel="noopener">Entur</a>. Skip og Vegvesen: <a href="https://allemannsdata.com/wiki/" target="_blank" rel="noopener">Allemannsdata</a>. AIS-posisjoner hentes bare når fartøylag er aktivert, og oppdateres omtrent hvert femte minutt, som passer med mellomlagringen hos Allemannsdata. AIS-fartøy beveges ikke kunstig mellom gamle posisjoner. Vegvesen leverer siste tilgjengelige hele timer, ikke løpende GPS. Holdeplasser vises med store trykkbare bussikoner fra Entur Geocoder v3 og avgangstavler via Journey Planner v3, med oppdatering omtrent hvert 30. sekund mens tavlen er åpen. Bussene animeres mellom mottatte GPS-posisjoner. I v2.4 er vegtilpasning og detaljerte 3D-busser alltid aktivert. GPS-animasjonen videreføres fra v1.5. Detaljerte busser tegnes med Three.js ved nær zoom og som mindre, formriktige bussymboler ved oversiktszoom. Størrelsesovergangen er glidende og påvirker ikke GPS-funksjonen. AIS via Allemannsdata sin find_vessels_nearby har normalt 300 sekunders mellomlagring og viser kun sist rapporterte posisjon. Åpne AIS-data omfatter ikke alle fiskefartøy og fritidsbåter. Dette er anslått vegvalg mellom GPS-fikser, ikke en kontrollert planlagt AtB-avgang eller garantert korrekt linjetrasé. Uten sikker match brukes den tidligere jevne animasjonen. I v2.4 bruker rutekartet den konkrete avgangens ServiceJourney-ID i Entur Journey Planner; vegen i sanntidsanimasjonen er framleis vegtilpassa som i v1.5.</p><p>3D: høyreklikk + dra på PC eller bruk to fingre på mobilen. Trykk på ein buss eller rutenummeret for å vise planlagd trase frå start til slutt. Klikk på fartøy, tellepunkter eller bygninger for detaljer. Anbefalt: publiser filen på en vanlig HTTPS-side som GitHub Pages. En lokal Android content://-adresse kan hindre kartfliser og API-kall. Dersom kartet er tomt, bruk knappen for 2D-reservekart.</p></details>
+   <details><summary>Om kartet og datakildene</summary><p>Bakgrunnskart: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> / OpenStreetMap. 3D-terreng: <a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener">Mapterhorn</a>. Bygninger: OSM-høyder (ikke Kartverkets NHM-modell). Busser: <a href="https://developer.entur.no/docs/open-services/vehicle-positions" target="_blank" rel="noopener">Entur</a>. Skip og Vegvesen: <a href="https://allemannsdata.com/wiki/" target="_blank" rel="noopener">Allemannsdata</a>. AIS-posisjoner hentes bare når fartøylag er aktivert, og oppdateres omtrent hvert femte minutt, som passer med mellomlagringen hos Allemannsdata. AIS-fartøy beveges ikke kunstig mellom gamle posisjoner. Vegvesen leverer siste tilgjengelige hele timer, ikke løpende GPS. Holdeplasser vises med store trykkbare bussikoner fra Entur Geocoder v3 og avgangstavler via Journey Planner v3, med oppdatering omtrent hvert 30. sekund mens tavlen er åpen. Bussene animeres mellom mottatte GPS-posisjoner. I v2.4 er vegtilpasning og detaljerte 3D-busser alltid aktivert. GPS-animasjonen videreføres fra v1.5. I v2.15 hentes AtB-busser i synlig kartutsnitt i hele Trøndelag, og øvrige posisjoner lastes ikke ned i Trondheim-visning. Detaljerte busser tegnes med Three.js ved nær zoom og som mindre, formriktige bussymboler ved oversiktszoom. Størrelsesovergangen er glidende og påvirker ikke GPS-funksjonen. AIS via Allemannsdata sin find_vessels_nearby har normalt 300 sekunders mellomlagring og viser kun sist rapporterte posisjon. Åpne AIS-data omfatter ikke alle fiskefartøy og fritidsbåter. Dette er anslått vegvalg mellom GPS-fikser, ikke en kontrollert planlagt AtB-avgang eller garantert korrekt linjetrasé. Uten sikker match brukes den tidligere jevne animasjonen. I v2.4 bruker rutekartet den konkrete avgangens ServiceJourney-ID i Entur Journey Planner; vegen i sanntidsanimasjonen er framleis vegtilpassa som i v1.5.</p><p>3D: høyreklikk + dra på PC eller bruk to fingre på mobilen. Trykk på ein buss eller rutenummeret for å vise planlagd trase frå start til slutt. Klikk på fartøy, tellepunkter eller bygninger for detaljer. Anbefalt: publiser filen på en vanlig HTTPS-side som GitHub Pages. En lokal Android content://-adresse kan hindre kartfliser og API-kall. Dersom kartet er tomt, bruk knappen for 2D-reservekart.</p></details>
   </div>
  </div>
 </aside>
@@ -193,7 +215,7 @@ body.route-focus .ship-name-tag{visibility:hidden}
  <div class="departure-foot"><span>Entur · tider kan endre seg</span><span id="departure-updated">–</span></div>
 </section>
 
-<!-- v2.14: kompakt værvarsel med åpne data fra Meteorologisk institutt. -->
+<!-- v2.15: kompakt værvarsel med åpne data fra Meteorologisk institutt. -->
 <button type="button" id="weather-launch" class="weather-fab" aria-controls="weather-shell" aria-expanded="false" title="Se værvarsel for Trondheim sentrum">
  <span class="weather-fab-icon" id="weather-mini-icon" aria-hidden="true">🌤️</span>
  <span class="weather-fab-copy"><strong id="weather-short">Henter værvarsel …</strong><small id="weather-mini-temp">Trondheim · MET</small></span>
@@ -207,7 +229,7 @@ body.route-focus .ship-name-tag{visibility:hidden}
  <div id="weather-hours" class="weather-hours" aria-label="Kommende timer"></div>
  <footer class="weather-foot"><span id="weather-updated">Kilde: <a href="https://www.met.no/" target="_blank" rel="noopener noreferrer">MET Norge</a> · bearbeidet prognose · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></span><button id="weather-refresh" class="weather-update" type="button" aria-label="Oppdater værmelding">↻ Oppdater</button></footer>
 </section>
-<div class="bottom-credit"><b>3D Trondheim · v2.14</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
+<div class="bottom-credit"><b>3D Trondheim · v2.15</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
@@ -225,6 +247,42 @@ const AIS_REFRESH_MS=300000; // Allemannsdata oppgir 300s cache / ikke sekunds-s
 // Beholder dokumentert v1.4-animasjon; v1.5 legger til valgfri vegbasert sti per GPS-endring.
 const BUS_POLL_MS=10000, BUS_BLEND_MS=10300, BUS_DRAW_MS=100;
 const AREAS={city:{center:[10.3980,63.4299],zoom:14.65,pitch:55,bearing:-18},fjord:{center:[10.18,63.525],zoom:10.55,pitch:58,bearing:-26},vanvikan:{center:[10.220,63.556],zoom:12.5,pitch:58,bearing:-25},brekstad:{center:[9.662,63.687],zoom:12.6,pitch:59,bearing:-32}};
+// The large geographical envelope is a safety limit, NOT a query for all of Trondelag.
+// Entur requests use the visible map bounding box within it. This also includes
+// AtB routes towards e.g. Oppdal, Roros, Leka, Fosen, and neighbouring county borders.
+const ATB_ENVELOPE={minLat:61.9,maxLat:65.8,minLon:6.8,maxLon:15.5};
+const ATB_REGIONS={
+ trondelag:{bounds:[[7.7,62.45],[14.6,65.42]]},
+ fosen:{center:[10.00,63.74],zoom:9.1,pitch:43,bearing:-15},
+ innherred:{center:[11.04,63.87],zoom:9.0,pitch:43,bearing:-15},
+ namdalen:{center:[11.45,64.63],zoom:8.4,pitch:40,bearing:-15},
+ oyregionen:{center:[8.55,63.64],zoom:9.7,pitch:43,bearing:-15},
+ orkdal:{center:[9.72,63.22],zoom:9.5,pitch:43,bearing:-15},
+ vernes:{center:[11.14,63.51],zoom:9.5,pitch:43,bearing:-15},
+ sor:{center:[10.36,62.78],zoom:8.6,pitch:40,bearing:-15}
+};
+let lastBusQueryBounds=null;
+function atbViewportBounds(expanded=false){
+ const box=map.getBounds();
+ const latSpan=Math.max(.0001,box.getNorth()-box.getSouth());
+ const lonSpan=Math.max(.0001,box.getEast()-box.getWest());
+ const padLat=expanded?Math.max(.008,Math.min(.14,latSpan*.17)):0;
+ const padLon=expanded?Math.max(.008,Math.min(.20,lonSpan*.17)):0;
+ const bounds={
+  minLat:Math.max(ATB_ENVELOPE.minLat,box.getSouth()-padLat),
+  maxLat:Math.min(ATB_ENVELOPE.maxLat,box.getNorth()+padLat),
+  minLon:Math.max(ATB_ENVELOPE.minLon,box.getWest()-padLon),
+  maxLon:Math.min(ATB_ENVELOPE.maxLon,box.getEast()+padLon)
+ };
+ return bounds.maxLat>bounds.minLat&&bounds.maxLon>bounds.minLon?bounds:null;
+}
+function viewportNeedsBusRefresh(){
+ const visible=atbViewportBounds(false);
+ if(!visible)return false;
+ const stored=lastBusQueryBounds;
+ return !stored||visible.minLat<stored.minLat||visible.maxLat>stored.maxLat||visible.minLon<stored.minLon||visible.maxLon>stored.maxLon;
+}
+
 const geoEmpty=()=>({type:'FeatureCollection',features:[]});
 const state={ready:false,bus:[],ship:[],traffic:[],lastBus:0,lastAIS:0,lastTraffic:0,requests:{bus:0,ais:0,traffic:0},followId:null,updateBusRunning:false,mapMode:'vector',mapErrors:0,styleTimer:null,handlersRegistered:false,notified:false};
 const htmlEscape=value=>String(value??'–').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -411,7 +469,7 @@ let busRaf=0, lastBusDraw=0, lastFollowCamera=0;
 function clearBusRouteLabels(){for(const marker of busRouteMarkers.values())marker.remove();busRouteMarkers.clear();}
 function routePopupHtml(p){return popup('🚌 Buss '+label(p.line),[['Rute',p.route],['Kjøretøy',p.vehicleId],['GPS oppdatert',p.updated]]);}
 function syncBusRouteLabels(features=state.bus){
- if(!state.ready || !$('toggle-bus').checked){clearBusRouteLabels();return;}
+ if(!state.ready || !$('toggle-bus').checked || map.getZoom()<10.5){clearBusRouteLabels();return;}
  const currentIds=new Set();
  const compact=map.getZoom()<15.2;
  for(const feature of features){
@@ -672,7 +730,7 @@ function busAnimationFrame(now){
 // 3D BUS MODEL (v2.4). Shared procedural mesh, no external asset URLs or model licences.
 // Visual LOD only: real-world sized 3D buses at close zoom; smaller, proportional
 // vector-sprite buses at neighbourhood/city zoom. No GPS/route/AIS logic changed.
-// v2.14: Use the SAME detailed three-dimensional mesh much farther out.
+// v2.15: Use the SAME detailed three-dimensional mesh much farther out.
 // The slim road-aligned bus illustration remains a fallback for far overviews
 // and devices on which the 3D renderer cannot run. Keep natural proportions:
 // no giant screen-facing billboards. Only visual LOD has been changed.
@@ -906,7 +964,7 @@ function initMap(){
  map.addLayer({id:'stopplace-halo',type:'circle',source:'stopplace-data',minzoom:13.65,paint:{'circle-radius':['interpolate',['linear'],['zoom'],13.65,8,16,11],'circle-color':'#ffffff','circle-stroke-color':'#aedbe9','circle-stroke-width':1.4,'circle-opacity':0.02}});
  map.addLayer({id:'stopplace-markers',type:'circle',source:'stopplace-data',minzoom:13.65,paint:{'circle-radius':['interpolate',['linear'],['zoom'],13.65,4.6,16,6.5],'circle-color':'#1686b6','circle-stroke-color':'#ffffff','circle-stroke-width':1.4,'circle-opacity':0.02}});
  map.addLayer({id:'bus-select-hit',type:'circle',source:'bus-data',paint:{'circle-color':'#fff','circle-opacity':.004,'circle-radius':['interpolate',['linear'],['zoom'],10,10,16,22]}});
- // v2.14: Slender bus silhouette lies in the road plane, rather than floating as a large upright billboard.
+ // v2.15: Slender bus silhouette lies in the road plane, rather than floating as a large upright billboard.
  // The close-zoom Three.js model remains physically sized in metres.
  map.addLayer({id:'bus-vehicles',type:'symbol',source:'bus-data',layout:{'icon-image':'red-bus','icon-size':BUS_ICON_ZOOM_SCALE,'icon-rotate':['get','bearing'],'icon-pitch-alignment':'map','icon-rotation-alignment':'map','icon-allow-overlap':true}});
  // Rutenummer vises med separate HTML-merkelapper over busssymbolene (uavhengig av kartstilens fonter).
@@ -935,15 +993,54 @@ function initMap(){
    state.styleTimer=setTimeout(()=>{if(state.mapMode==='vector' && !map.loaded())mapFallback('Manglende fullstendig kartinnlasting');},15000);
  }setVisible('other-vessels',$('toggle-ship').checked);setVisible('fast-vessels',$('toggle-boat').checked);ensureBus3D();syncAISLabels();global('Kartstil lastet · henter kartfliser og sanntidsdata','pending');refreshAll(true);
 }
-async function updateBuses(){if(!state.ready||!$('toggle-bus').checked){state.bus=[];clearBusAnimation();setData('bus-data',[]);clearBusRouteLabels();setCounts();apiMessage('bus','Av','pending');return;}const seq=++state.requests.bus;apiMessage('bus','Henter …','pending');try{
- // query confirmed against published Entur schema; only data younger than 5 minutes.
- const b=map.getBounds(),delta=0.008;const bounds={minLat:Math.max(62.9,b.getSouth()-delta),maxLat:Math.min(64.1,b.getNorth()+delta),minLon:Math.max(8.9,b.getWest()-delta),maxLon:Math.min(11.8,b.getEast()+delta)};
- if(bounds.maxLat<=bounds.minLat||bounds.maxLon<=bounds.minLon){state.bus=[];clearBusAnimation();setData('bus-data',[]);clearBusRouteLabels();setCounts();return;}
- const query=`{ vehicles(codespaceId: "ATB", boundingBox: {minLat: ${bounds.minLat.toFixed(5)}, maxLat: ${bounds.maxLat.toFixed(5)}, minLon: ${bounds.minLon.toFixed(5)}, maxLon: ${bounds.maxLon.toFixed(5)}}, maxDataAge: "PT5M") {vehicleId lastUpdated bearing line {publicCode lineName} serviceJourney {id} originName destinationName location {latitude longitude}} }`;
- const json=await getJSON(SOURCES.entur,{method:'POST',headers:{'Content-Type':'application/json','ET-Client-Name':'trondheim-sanntidskart-demo'},body:JSON.stringify({query})});if(seq!==state.requests.bus)return;
- const dedup=new Map();for(const v of json?.data?.vehicles||[]){const c=coords(v.location);if(!c)continue;const line=String(v.line?.publicCode||'').trim();if(['800','805','810'].includes(line))continue;const key=v.vehicleId||JSON.stringify(c);dedup.set(key,point(c,{vehicleId:v.vehicleId||'–',line:line||'Buss',route:v.line?.lineName||'Ikke oppgitt',serviceJourneyId:v.serviceJourney?.id||'',originName:v.originName||'',destinationName:v.destinationName||'',bearing:num(v.bearing)??0,updated:v.lastUpdated||'Ukjent'}));}
- state.bus=[...dedup.values()];acceptBusSnapshot(state.bus);setCounts();apiMessage('bus',clock()+' · aktiv','ok');state.lastBus=Date.now();updateStamp();
- }catch(e){if(seq!==state.requests.bus)return;apiMessage('bus','Feil · '+e.message,'fail');$('count-bus').textContent='!';console.warn('Entur:',e);global('Én eller flere datakilder svarer ikke','fail');}}
+async function updateBuses(){
+ if(!state.ready||!$('toggle-bus').checked){
+  lastBusQueryBounds=null;state.bus=[];clearBusAnimation();setData('bus-data',[]);
+  clearBusRouteLabels();setCounts();apiMessage('bus','Av','pending');return;
+ }
+ const seq=++state.requests.bus;
+ const bounds=atbViewportBounds(true);
+ if(!bounds){
+  lastBusQueryBounds=null;state.bus=[];clearBusAnimation();setData('bus-data',[]);
+  clearBusRouteLabels();setCounts();state.lastBus=Date.now();
+  apiMessage('bus','Utenfor AtB-omradet','pending');return;
+ }
+ lastBusQueryBounds=bounds;
+ apiMessage('bus','Henter AtB-busser i utsnittet …','pending');
+ try{
+  // Same Entur API and schema as v2.14. Only coordinates, age, area and
+  // transport mode are used; do not download the rest of Norway for a city view.
+  const query=`{ vehicles(codespaceId: "ATB", boundingBox: {minLat: ${bounds.minLat.toFixed(5)}, maxLat: ${bounds.maxLat.toFixed(5)}, minLon: ${bounds.minLon.toFixed(5)}, maxLon: ${bounds.maxLon.toFixed(5)}}, maxDataAge: "PT5M") {vehicleId mode lastUpdated bearing line {publicCode lineName} serviceJourney {id} originName destinationName location {latitude longitude}} }`;
+  const json=await getJSON(SOURCES.entur,{method:'POST',headers:{'Content-Type':'application/json','ET-Client-Name':'trondheim-sanntidskart-demo'},body:JSON.stringify({query})});
+  if(seq!==state.requests.bus)return;
+  const dedup=new Map();
+  for(const v of json?.data?.vehicles||[]){
+   const c=coords(v.location);if(!c)continue;
+   const line=String(v.line?.publicCode||'').trim();
+   const mode=String(v.mode||'').toUpperCase();
+   // Only actual bus/coach vehicles. Unknown mode is preserved for regional
+   // data providers that omit transport mode, except known boat route codes.
+   if(mode && mode!=='BUS'&&mode!=='COACH')continue;
+   if(!mode&&['800','805','810'].includes(line))continue;
+   const key=v.vehicleId||JSON.stringify(c);
+   dedup.set(key,point(c,{
+    vehicleId:v.vehicleId||'–',line:line||'Buss',
+    route:v.line?.lineName||'Ikke oppgitt',serviceJourneyId:v.serviceJourney?.id||'',
+    originName:v.originName||'',destinationName:v.destinationName||'',
+    bearing:num(v.bearing)??0,updated:v.lastUpdated||'Ukjent'
+   }));
+  }
+  state.bus=[...dedup.values()];acceptBusSnapshot(state.bus);setCounts();
+  apiMessage('bus',clock()+' · '+state.bus.length+' busser i utsnittet','ok');
+  state.lastBus=Date.now();updateStamp();
+ }catch(e){
+  if(seq!==state.requests.bus)return;
+  lastBusQueryBounds=null;
+  apiMessage('bus','Feil · '+e.message,'fail');
+  $('count-bus').textContent='!';console.warn('Entur:',e);
+  global('Én eller flere datakilder svarer ikke','fail');
+ }
+}
 // Maritime categories are AIS classifications, not guessed identities.
 function classifyAIS(o){
  const raw=o.ship_type??o.shipType??o.vessel_type??o.vesselType??o.type??o.ship_type_code??o.shiptype??'';
@@ -1234,7 +1331,7 @@ $('toggle-stops').addEventListener('change',e=>{if(!e.target.checked){stopLayerS
 
 $('route-zoom').addEventListener('click',fitSelectedBusRoute);
 
-function refreshAll(force=false){if(!state.ready)return;const now=Date.now();if(force||now-state.lastBus>BUS_POLL_MS)updateBuses();if(($('toggle-boat').checked||$('toggle-ship').checked)&&(force||now-state.lastAIS>AIS_REFRESH_MS))updateAIS();if($('toggle-traffic').checked&&(force||now-state.lastTraffic>270000))updateTraffic();}
+function refreshAll(force=false){if(!state.ready)return;const now=Date.now();if(force||now-state.lastBus>BUS_POLL_MS||viewportNeedsBusRefresh())updateBuses();if(($('toggle-boat').checked||$('toggle-ship').checked)&&(force||now-state.lastAIS>AIS_REFRESH_MS))updateAIS();if($('toggle-traffic').checked&&(force||now-state.lastTraffic>270000))updateTraffic();}
 let moveDebounce;
 map.on('style.load',()=>{try{initMap();}catch(e){global('Kartfeil: '+e.message,'fail');notice('En kartkomponent feilet: '+e.message+'. Prøv 2D-kart.');console.error(e);}});
 map.on('idle',()=>{if(state.ready){if(state.mapMode==='vector')clearTimeout(state.styleTimer);if(!state.mapErrors)global('Kartgrunnlag lastet · sanntidsdata kontrolleres','ok');}});
@@ -1257,8 +1354,17 @@ map.on('error',e=>{
 $('switch-basemap').addEventListener('click',()=>state.mapMode==='vector'?mapFallback('Byttet manuelt'):mapPrimary());
 $('dismiss-alert').addEventListener('click',()=>{$('map-alert').hidden=true;});
 if(location.protocol==='content:' || location.protocol==='file:')notice('Dette er en lokal fil på telefonen. Kartkilder kan blokkeres. Prøv 2D-kart, eller publiser filen via GitHub Pages.');
-map.on('moveend',()=>{syncAISLabels();syncBus3DModels([...busTracks].map(([id,t])=>{const pos=busPosition(t,performance.now());return point(pos.coords,{...t.props,bearing:pos.bearing});}));const c=map.getCenter();$('coordinates').textContent=c.lat.toFixed(4)+'° N / '+c.lng.toFixed(4)+'° Ø';if(state.ready){clearTimeout(moveDebounce);moveDebounce=setTimeout(()=>{refreshAll();loadStopPlaces();},750);}});
+map.on('moveend',()=>{syncAISLabels();const movingBusFeatures=[...busTracks].map(([id,t])=>{const pos=busPosition(t,performance.now());return point(pos.coords,{...t.props,bearing:pos.bearing});});syncBus3DModels(movingBusFeatures);syncBusRouteLabels(movingBusFeatures);const c=map.getCenter();$('coordinates').textContent=c.lat.toFixed(4)+'° N / '+c.lng.toFixed(4)+'° Ø';if(state.ready){clearTimeout(moveDebounce);moveDebounce=setTimeout(()=>{refreshAll();loadStopPlaces();},750);}});
 for(const b of document.querySelectorAll('[data-area]'))b.addEventListener('click',()=>{document.querySelectorAll('[data-area]').forEach(n=>n.classList.toggle('active',n===b));state.followId=null;const p=AREAS[b.dataset.area];map.flyTo({...p,speed:1.5,essential:true});});
+for(const button of document.querySelectorAll('[data-atb-region]'))button.addEventListener('click',()=>{
+ const preset=ATB_REGIONS[button.dataset.atbRegion];if(!preset)return;
+ document.querySelectorAll('[data-area]').forEach(n=>n.classList.remove('active'));
+ state.followId=null;clearSelectedBusRoute();clearDepartures();
+ if(preset.bounds)map.fitBounds(preset.bounds,{padding:38,duration:1000,essential:true});
+ else map.flyTo({...preset,speed:1.4,essential:true});
+ // Keep panel accessible; close menu only on small phones while navigating.
+ if(window.innerWidth<=640&&!$('panel').classList.contains('collapsed'))$('collapse').click();
+});
 $('home').addEventListener('click',()=>document.querySelector('[data-area="city"]').click());$('refresh').addEventListener('click',()=>{refreshAll(true);loadStopPlaces(true);if(boardState.stop)updateDepartureBoard(true);});
 $('collapse').addEventListener('click',()=>{const closed=$('panel').classList.toggle('collapsed');$('collapse').setAttribute('aria-expanded',String(!closed));$('collapse').setAttribute('aria-label',closed?'Vis kartmenyen':'Skjul kartmenyen');});
 $('toggle-bus3d').addEventListener('change',()=>{configureBus2D();if($('toggle-bus3d').checked)ensureBus3D();else syncBus3DModels([]);});
@@ -1277,13 +1383,13 @@ window.addEventListener('visibilitychange',()=>{if(document.hidden){if(busRaf)ca
 });
 </script>
 <script>
-/* v2.14: kompakt, databasert værtekst for Trondheim sentrum. Kollektivkartets JS er urørt. */
+/* v2.15: kompakt, databasert værtekst for Trondheim sentrum. Kollektivkartets JS er urørt. */
 (function(){
 'use strict';
 const get=id=>document.getElementById(id);
 const openButton=get('weather-launch'),panel=get('weather-shell');
 const url='https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=63.4305&lon=10.3951';
-const cacheKey='trondheim3d:met-locationforecast:v2.14';
+const cacheKey='trondheim3d:met-locationforecast:v2.15';
 const refreshMs=30*60*1000;
 const osloHour=new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',hour:'2-digit',hourCycle:'h23'});
 let latest=null,pending=null,nextAllowed=0;
