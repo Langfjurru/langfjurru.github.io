@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
-<meta name="app-version" content="2.10">
+<meta name="app-version" content="2.11">
 <meta name="description" content="Trondheim i 3D med levende AtB-busser, klikkbare holdeplasser og sanntidsavgangstavler fra Entur.">
-<title>Trondheim · 3D og sanntidskart · v2.10</title>
+<title>Trondheim · 3D og sanntidskart · v2.11</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -187,7 +187,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar collapsed" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.10</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.10">v2.10</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.11</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.11">v2.11</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · animert langs veg · GPS ca. kvart 10. sekund<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><span id="bus3d-status" class="state" role="status">Laster detaljerte 3D-busser …</span><input id="toggle-road" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"><input id="toggle-bus3d" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
@@ -258,7 +258,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
     </details>
   </div>
 </aside>
-<div class="bottom-credit"><b>3D Trondheim · v2.10</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
+<div class="bottom-credit"><b>3D Trondheim · v2.11</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
@@ -489,7 +489,7 @@ function syncBusRouteLabels(features=state.bus){
    marker.setLngLat(c);
    // Keep the number tag close to the scaled-down bus at city and area zoom.
    const z=map.getZoom();
-   marker.setOffset([0, z<13?-6:z<15.2?-10:z<16?-13:-18]);
+   marker.setOffset([0, z<13?-10:z<15.2?-22:z<16.5?-28:z<18?-36:-43]);
  }
  for(const [id,marker] of busRouteMarkers){if(!currentIds.has(id)){marker.remove();busRouteMarkers.delete(id);}}
 }
@@ -723,11 +723,15 @@ function busAnimationFrame(now){
 // 3D BUS MODEL (v2.4). Shared procedural mesh, no external asset URLs or model licences.
 // Visual LOD only: real-world sized 3D buses at close zoom; smaller, proportional
 // vector-sprite buses at neighbourhood/city zoom. No GPS/route/AIS logic changed.
-// v2.10: detailed meshes return at an intermediate zoom (v2.8: 16.0; v2.9: 17.55).
-// Real-world scale still prevents the oversized block effect at overview zoom.
-const BUS_MESH_MIN_ZOOM=16.85;
+// v2.11: Separate true physical-sized 3D from *readable, screen-space* bus art.
+// The v2.9/v2.10 sprites were only ~20-30 screen pixels at useful street zoom;
+// windows/doors disappeared. Use a high-DPI icon that stays a legible size
+// while zooming OUT, and show the real 3D model only when it has enough pixels.
+// This affects visual LOD only, not GPS position, animation or route matching.
+const BUS_MESH_MIN_ZOOM=18.65;
 const BUS_ICON_ZOOM_SCALE=['interpolate',['linear'],['zoom'],
-  9,0.10, 11,0.13, 12.5,0.16, 14,0.20, 15,0.24, 16,0.30, 16.6,0.34, 17,0.37, 18,0.40, 19,0.42];
+  9,0.24, 11,0.30, 12.5,0.36, 14,0.47, 15,0.56,
+  16,0.66, 17,0.78, 18,0.87, 18.7,0.91, 19.5,0.95];
 // Only Three.js is loaded on demand; MapLibre + all v1.5 vehicle functionality
 // remains operational if that CDN is unavailable, or if 3D fails on a phone.
 let ThreeLib=null,threeLoading=null,bus3dLayer=null,threeError=false;
@@ -835,12 +839,13 @@ function buildThreeLayer(THREE){
 }
 function configureBus2D(){
  if(!state.ready||!map.getLayer('bus-vehicles'))return;
- // Maintain clickable symbols as fallback and when zoomed out.
+ // Visual LOD: crisp detailed bus sprites at neighborhood/street zoom,
+ // and crossfade to true meter-scaled Three.js buses only when close enough.
  const detail=bus3dActive();
- // Keep a visible, recognisable fallback until actual meshes are large enough.
+ // Never fade away the illustration unless actual 3D instances are ready.
  const models=bus3dLayer?.instances?.size||0;
  map.setPaintProperty('bus-vehicles','icon-opacity',(detail&&models)
-   ? ['interpolate',['linear'],['zoom'],16.85,1,17.00,0.25,17.16,0]
+   ? ['interpolate',['linear'],['zoom'],18.75,1,18.95,0.72,19.18,0.14,19.32,0]
    : 1);
  const status=threeError?'3D-modell feilet · detaljert bussikon brukes':detail?(models?'3D aktiv · '+models+' modeller':'3D klar · zoom inn for modeller'):'Detaljert bussikon';
  bus3dMessage(status);
@@ -862,8 +867,9 @@ function syncBus3DModels(features){if(bus3dLayer?.ready)bus3dLayer.setFeatures(f
 // red block, it has a 3D body, roof, angled nose, glazing, wheels, doors and lights.
 // It is also used as the low-zoom symbol while the genuine Three.js meshes are too small.
 function addDetailedBusSprite(){
- const c=document.createElement('canvas');c.width=144;c.height=176;
- const g=c.getContext('2d');g.scale(2,2);g.translate(36,44);
+ // Same carefully drawn vector art, rendered at 4x resolution for sharp phone displays.
+ const c=document.createElement('canvas');c.width=288;c.height=352;
+ const g=c.getContext('2d');g.scale(4,4);g.translate(36,44);
  const polygon=(coords,fill,stroke='#ffffff')=>{g.beginPath();g.moveTo(coords[0][0],coords[0][1]);for(let i=1;i<coords.length;i++)g.lineTo(coords[i][0],coords[i][1]);g.closePath();g.fillStyle=fill;g.fill();if(stroke){g.strokeStyle=stroke;g.lineWidth=.8;g.stroke();}};
  // Shadow + four protruding wheels.
  g.fillStyle='rgba(9,23,35,.24)';g.beginPath();g.ellipse(1,4,22,35,-.11,0,2*Math.PI);g.fill();
@@ -892,7 +898,7 @@ function addDetailedBusSprite(){
  g.fillStyle='#fb817c';g.fillRect(-13,31,4,2);g.fillRect(14,29,4,2);
  // Red lower skirts / angled side shadow.
  polygon([[17,25],[23,26],[18,35],[15,32]],'#b52a34',null);
- try{map.addImage('red-bus',g.getImageData(0,0,144,176),{pixelRatio:2});}
+ try{map.addImage('red-bus',g.getImageData(0,0,288,352),{pixelRatio:4});}
  catch(e){console.warn('3D-bussikon:',e);}
 }
 function addArt(name,fill,type){const c=document.createElement('canvas');c.width=64;c.height=64;const g=c.getContext('2d');g.translate(32,32);g.shadowColor='rgba(0,0,0,.25)';g.shadowBlur=4;g.shadowOffsetY=2;g.fillStyle=fill;g.strokeStyle='white';g.lineWidth=3;if(type==='bus'){g.beginPath();g.roundRect(-16,-25,32,50,9);g.fill();g.stroke();g.fillStyle='#252f39';g.fillRect(-11,-17,22,9);g.fillStyle='#fff4';g.fillRect(-10,4,20,4);g.fillStyle='#ffecc6';g.fillRect(-13,16,5,4);g.fillRect(8,16,5,4);}else{g.beginPath();g.moveTo(0,-26);g.bezierCurveTo(17,-15,17,13,10,24);g.lineTo(-10,24);g.bezierCurveTo(-17,13,-17,-15,0,-26);g.closePath();g.fill();g.stroke();g.shadowBlur=0;g.fillStyle='#c6edf4';g.fillRect(-9,-5,18,9);}try{map.addImage(name,g.getImageData(0,0,64,64),{pixelRatio:2});}catch(e){console.warn('Ikonfeil:',e);}}
@@ -944,7 +950,9 @@ function initMap(){
  map.addLayer({id:'stopplace-halo',type:'circle',source:'stopplace-data',minzoom:13.65,paint:{'circle-radius':['interpolate',['linear'],['zoom'],13.65,8,16,11],'circle-color':'#ffffff','circle-stroke-color':'#aedbe9','circle-stroke-width':1.4,'circle-opacity':0.02}});
  map.addLayer({id:'stopplace-markers',type:'circle',source:'stopplace-data',minzoom:13.65,paint:{'circle-radius':['interpolate',['linear'],['zoom'],13.65,4.6,16,6.5],'circle-color':'#1686b6','circle-stroke-color':'#ffffff','circle-stroke-width':1.4,'circle-opacity':0.02}});
  map.addLayer({id:'bus-select-hit',type:'circle',source:'bus-data',paint:{'circle-color':'#fff','circle-opacity':.004,'circle-radius':['interpolate',['linear'],['zoom'],10,10,16,22]}});
- map.addLayer({id:'bus-vehicles',type:'symbol',source:'bus-data',layout:{'icon-image':'red-bus','icon-size':BUS_ICON_ZOOM_SCALE,'icon-rotate':['get','bearing'],'icon-allow-overlap':true}});
+ // Keep the detailed icon face-on to the camera at high map pitch, while still rotating with bus heading.
+ // This avoids it being squashed by the tilted road plane (common on mobile).
+ map.addLayer({id:'bus-vehicles',type:'symbol',source:'bus-data',layout:{'icon-image':'red-bus','icon-size':BUS_ICON_ZOOM_SCALE,'icon-rotate':['get','bearing'],'icon-pitch-alignment':'viewport','icon-rotation-alignment':'map','icon-allow-overlap':true}});
  // Rutenummer vises med separate HTML-merkelapper over busssymbolene (uavhengig av kartstilens fonter).
  if(!state.handlersRegistered){
  map.on('click','stopplace-markers',e=>{const p=e.features?.[0]?.properties;if(p?.id){e.originalEvent.__trondheimStopClicked=true;selectStopPlace({id:String(p.id),name:String(p.name||'Holdeplass')});}});
