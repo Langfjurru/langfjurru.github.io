@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
 <meta name="description" content="Trondheim i 3D – levende bussposisjoner, AIS-fartøy og trafikktellepunkter fra åpne datakilder.">
-<title>Trondheim · 3D og sanntidskart · v1.7</title>
+<title>Trondheim · 3D og sanntidskart · v1.8</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -49,7 +49,7 @@ details{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}summar
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v1.7</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 1.7">v1.7</span></h1><p class="tagline">Busser, hurtigbåter og trafikk i sanntid</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v1.8</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 1.8">v1.8</span></h1><p class="tagline">Busser, hurtigbåter og trafikk i sanntid</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · jevn animasjon · hentes ca. hvert 10. sek<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><label class="road-option"><input id="toggle-road" type="checkbox" checked> Følg vegnettet (beta)</label><br><label class="road-option"><input id="toggle-bus3d" type="checkbox" checked> Detaljerte 3D-busser</label><br><span id="bus3d-status" class="state" role="status">Laster 3D-visning …</span></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
@@ -60,19 +60,25 @@ details{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}summar
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-terrain" type="checkbox" aria-label="Vis 3D-terreng"><div><div class="layer-name"><span class="pict" style="width:22px;height:22px;background:#e3ebe1;font-size:15px">▲</span>3D-terreng</div><div class="layer-note">Mapterhorn · valgfritt</div></div></div><div class="data-right"><span class="state" id="terrain-status">Av</span></div></div>
    <div class="buttons"><button id="follow" class="action primary" type="button" disabled>Følg en buss</button><button id="home" class="action" type="button">Til sentrum</button></div>
    <div class="smallbuttons"><button id="refresh" class="link-button" type="button">↻ Oppdater kilder</button><span style="font-size:11px;color:#657681" id="refreshed">Venter på oppdatering</span></div>
-   <div class="diagnostics" aria-live="polite"><div class="statusline" id="global-status"><span class="live"></span> Initialiserer kartet …</div><div class="api-grid"><span>Entur / busser</span><span id="state-bus" class="pending">Venter</span><span>Allemannsdata / AIS</span><span id="state-ais" class="pending">Venter</span><span>Allemannsdata / trafikk</span><span id="state-traffic" class="pending">Av</span></div><p class="info">Fartøy vises kun med mottatt AIS-posisjon – ikke simulert trafikk. AIS kan være opptil flere minutter gammelt, og enkelte små fartøy er utelatt i åpne AIS-data. Manglende dekning vises som statusfeil, ikke som oppdiktede posisjoner.</p></div>
-   <details><summary>Om kartet og datakildene</summary><p>Bakgrunnskart: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> / OpenStreetMap. 3D-terreng: <a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener">Mapterhorn</a>. Bygninger: OSM-høyder (ikke Kartverkets NHM-modell). Busser: <a href="https://developer.entur.no/docs/open-services/vehicle-positions" target="_blank" rel="noopener">Entur</a>. Skip og Vegvesen: <a href="https://allemannsdata.com/wiki/" target="_blank" rel="noopener">Allemannsdata</a>. AIS hentes ved oppstart og omtrent hvert femte minutt, som passer med mellomlagringen hos Allemannsdata. AIS-fartøy beveges ikke kunstig mellom gamle posisjoner. Vegvesen leverer siste tilgjengelige hele timer, ikke løpende GPS. Bussene animeres mellom mottatte GPS-posisjoner. I v1.7 beholdes vegtilpasning og GPS-animasjon fra v1.5. Detaljerte busser tegnes som tredimensjonal geometri med Three.js og kan slås av uten å berøre GPS-funksjonen. AIS via Allemannsdata har normalt 300 sekunders mellomlagring og viser kun sist rapporterte posisjon. Det kreves en godkjent AIS-dataforbindelse for full dekning. Dette er anslått vegvalg mellom GPS-fikser, ikke en kontrollert planlagt AtB-avgang eller garantert korrekt linjetrasé. Uten sikker match brukes den tidligere jevne animasjonen.</p><p>3D: høyreklikk + dra på PC eller bruk to fingre på mobilen. Klikk på busser, fartøy, tellepunkter eller bygninger for detaljer. Anbefalt: publiser filen på en vanlig HTTPS-side som GitHub Pages. En lokal Android content://-adresse kan hindre kartfliser og API-kall. Dersom kartet er tomt, bruk knappen for 2D-reservekart.</p></details>
+   <div class="diagnostics" aria-live="polite"><div class="statusline" id="global-status"><span class="live"></span> Initialiserer kartet …</div><div class="api-grid"><span>Entur / busser</span><span id="state-bus" class="pending">Venter</span><span>Allemannsdata / AIS-posisjoner</span><span id="state-ais" class="pending">Venter</span><span>Allemannsdata / trafikk</span><span id="state-traffic" class="pending">Av</span></div><p class="info">Fartøy vises kun med mottatt AIS-posisjon – ikke simulert trafikk. AIS-data kan være flere minutter gammelt, og enkelte små fartøy er utelatt i åpne AIS-data. Manglende dekning vises som statusfeil, ikke som oppdiktede posisjoner.</p></div>
+   <details><summary>Om kartet og datakildene</summary><p>Bakgrunnskart: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> / OpenStreetMap. 3D-terreng: <a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener">Mapterhorn</a>. Bygninger: OSM-høyder (ikke Kartverkets NHM-modell). Busser: <a href="https://developer.entur.no/docs/open-services/vehicle-positions" target="_blank" rel="noopener">Entur</a>. Skip og Vegvesen: <a href="https://allemannsdata.com/wiki/" target="_blank" rel="noopener">Allemannsdata</a>. AIS-posisjoner hentes ved oppstart og omtrent hvert femte minutt, som passer med mellomlagringen hos Allemannsdata. AIS-fartøy beveges ikke kunstig mellom gamle posisjoner. Vegvesen leverer siste tilgjengelige hele timer, ikke løpende GPS. Bussene animeres mellom mottatte GPS-posisjoner. I v1.8 beholdes vegtilpasning og GPS-animasjon fra v1.5. Detaljerte busser tegnes som tredimensjonal geometri med Three.js og kan slås av uten å berøre GPS-funksjonen. AIS via Allemannsdata sin find_vessels_nearby har normalt 300 sekunders mellomlagring og viser kun sist rapporterte posisjon. Åpne AIS-data omfatter ikke alle fiskefartøy og fritidsbåter. Dette er anslått vegvalg mellom GPS-fikser, ikke en kontrollert planlagt AtB-avgang eller garantert korrekt linjetrasé. Uten sikker match brukes den tidligere jevne animasjonen.</p><p>3D: høyreklikk + dra på PC eller bruk to fingre på mobilen. Klikk på busser, fartøy, tellepunkter eller bygninger for detaljer. Anbefalt: publiser filen på en vanlig HTTPS-side som GitHub Pages. En lokal Android content://-adresse kan hindre kartfliser og API-kall. Dersom kartet er tomt, bruk knappen for 2D-reservekart.</p></details>
   </div>
  </div>
 </aside>
-<div class="bottom-credit"><b>3D Trondheim · v1.7</b><br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
+<div class="bottom-credit"><b>3D Trondheim · v1.8</b><br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const SOURCES={entur:'https://api.entur.io/realtime/v2/vehicles/graphql',ais:'https://allemannsdata.com/wiki/api/v1/kilder/ais/get_area_traffic',traffic:'https://allemannsdata.com/wiki/api/v1/kilder/vegvesen/find_traffic_points',volume:'https://allemannsdata.com/wiki/api/v1/kilder/vegvesen/get_traffic_volume'};
+const SOURCES={entur:'https://api.entur.io/realtime/v2/vehicles/graphql',ais:'https://allemannsdata.com/wiki/api/v1/kilder/ais/find_vessels_nearby',traffic:'https://allemannsdata.com/wiki/api/v1/kilder/vegvesen/find_traffic_points',volume:'https://allemannsdata.com/wiki/api/v1/kilder/vegvesen/get_traffic_volume'};
 // To overlappende sjoomraader dekker Indre Trondheimsfjord og ytre fjord.
-const AIS_ZONES=[{lat:63.50,lon:10.35,radius:85},{lat:63.65,lon:9.32,radius:80}];
+// Litt overlappende soner over Trondheimsfjorden. 45 km soekeradius gir moderat belastning.
+const AIS_ZONES=[
+ {lat:63.49,lon:10.43,radius:45}, // Trondheim, Vanvikan og indre fjord
+ {lat:63.65,lon:9.88,radius:45},  // Stjoerna, Orland og midtfjord
+ {lat:63.81,lon:11.12,radius:45}, // Levanger og fjordarmen mot Steinkjer
+ {lat:63.68,lon:9.25,radius:45}  // Ytre Trondheimsfjord
+];
 const AIS_REFRESH_MS=300000; // Allemannsdata oppgir 300s cache / ikke sekunds-sanntid.
 // Beholder dokumentert v1.4-animasjon; v1.5 legger til valgfri vegbasert sti per GPS-endring.
 const BUS_POLL_MS=10000, BUS_BLEND_MS=10300, BUS_DRAW_MS=100;
@@ -389,7 +395,7 @@ function busAnimationFrame(now){
 }
 
 
-// 3D BUS MODEL (v1.7). Shared procedural mesh, no external asset URLs or model licences.
+// 3D BUS MODEL (v1.8). Shared procedural mesh, no external asset URLs or model licences.
 // Only Three.js is loaded on demand; MapLibre + all v1.5 vehicle functionality
 // remains operational if that CDN is unavailable, or if 3D fails on a phone.
 let ThreeLib=null,threeLoading=null,bus3dLayer=null,threeError=false;
@@ -645,40 +651,96 @@ function syncAISLabels(){
  }
  for(const [id,m] of shipNameMarkers)if(!keep.has(id)){m.remove();shipNameMarkers.delete(id);}
 }
+// AIS-FIKS v1.8: get_area_traffic gir bare aggregerte tall og er IKKE et punktdatasett.
+// find_vessels_nearby leverer fartoyposisjoner. Behandle kun bekreftede punktkoordinater.
+function aisRows(payload){
+ const out=[],seen=new Set();
+ function visit(x,depth){
+  if(!x||typeof x!=='object'||depth>9||seen.has(x))return;
+  seen.add(x);
+  if(Array.isArray(x)){for(const item of x)visit(item,depth+1);return;}
+  // Kilde leverer ofte {vessels:[...]}, {items:[...]} eller {results:[...]}.
+  const vesselHint=(x.mmsi!=null||x.MMSI!=null||x.vessel_id!=null||x.vesselId!=null||
+       x.ship_name!=null||x.vessel_name!=null||x.shipType!=null||x.ship_type!=null||
+       x.vessel!=null||x.latest_position!=null||x.last_position!=null||
+       x.type==='vessel'||x.entity_type==='vessel'||
+       ((x.name!=null||x.shipName!=null)&&(x.speed!=null||x.sog!=null||x.course!=null||x.callsign!=null)));
+  if(vesselHint && (coords(x)||coords(x.latest_position)||coords(x.last_position)||coords(x.lastPosition)||coords(x.vessel)))out.push(x);
+  // Behold identiteten ved a prioritere overordnede fartoy-objekter.
+  for(const [key,value] of Object.entries(x)){
+   if(['_meta','_links','_provenance','parameters','sources','summary','statistics','by_type'].includes(key))continue;
+   if(value&&typeof value==='object')visit(value,depth+1);
+  }
+ }
+ visit(payload?.data??payload,0);
+ // AIS-APIet kan ogsa returnere normaliserte fartoyer under entities.
+ for(const ent of payload?.entities||[]){if(ent?.type==='vessel'||ent?.entity_type==='vessel')visit(ent,0);}
+ return out;
+}
 function aisFeature(a){
  if(a?.type==='Feature'&&a.properties)a={...a.properties,geometry:a.geometry};
- const c=coords(a)||coords(a.latest_position)||coords(a.last_position)||coords(a.lastPosition)||coords(a.vessel);
+ const detail=a.vessel&&typeof a.vessel==='object'?a.vessel:{};
+ const pos=a.latest_position??a.latestPosition??a.last_position??a.lastPosition??a.position??a.location??{};
+ const c=coords(a)||coords(pos)||coords(detail)||coords(detail.position);
  if(!c||c[0]<8.6||c[0]>12.0||c[1]<63.1||c[1]>64.35)return null;
- const mmsi=String(a.mmsi??a.MMSI??a.vessel_id??a.vesselId??a.vessel?.mmsi??'');
- const name=String(a.name??a.vessel_name??a.ship_name??a.shipName??a.vessel?.name??'Ukjent fartøy');
- const speed=num(a.speed??a.sog??a.speed_knots??a.speedOverGround??a.speed_over_ground);
- const raw=a.ship_type??a.shipType??a.vessel_type??a.type??a.ship_type_code??'';
- const cat=classifyAIS(a);
- const updated=String(a.msgtime??a.msgTime??a.timestamp??a.updated_at??a.last_updated??a.lastUpdated??a.position_timestamp??a.time??'Ukjent');
- const course=num(a.course??a.cog??a.courseOverGround??a.course_over_ground??a.heading??a.trueHeading);
+ const mmsi=String(a.mmsi??a.MMSI??a.vessel_id??a.vesselId??detail.mmsi??detail.id??a.id??'');
+ const name=String(a.name??a.vessel_name??a.ship_name??a.shipName??detail.name??detail.vessel_name??'Ukjent fartoy');
+ const speed=num(a.speed??a.sog??a.speed_knots??a.speedOverGround??a.speed_over_ground??pos.speed??pos.sog??pos.speedOverGround);
+ const raw=a.ship_type??a.shipType??a.vessel_type??a.vesselType??a.ship_type_code??detail.shipType??detail.ship_type??a.type_code??'';
+ const cat=classifyAIS({...detail,...a,name,ship_type:raw});
+ const updated=String(a.msgtime??a.msgTime??a.timestamp??a.updated_at??a.last_updated??a.lastUpdated??pos.msgtime??pos.timestamp??pos.time??a.time??'Ukjent');
+ const course=num(a.course??a.cog??a.courseOverGround??a.course_over_ground??a.heading??a.trueHeading??pos.course??pos.cog??pos.courseOverGround);
  return point(c,{passenger:cat.passenger,fast:cat.passenger,category:cat.category,mmsi,name,type:String(raw),speed:speed===null?null:Math.round(speed*10)/10,course:course??0,updated});
 }
 async function getAISZone(zone){
- const base=new URL(SOURCES.ais);base.searchParams.set('lat',zone.lat);base.searchParams.set('lon',zone.lon);base.searchParams.set('radius_km',zone.radius);base.searchParams.set('limit','100');base.searchParams.set('offset','0');
- const first=await getJSON(base);let found=findRows(first);
- // API max 100/page. Only paginate if the first page is full; bounded cost.
- if(found.length>=100){base.searchParams.set('offset','100');try{found=found.concat(findRows(await getJSON(base)));}catch(e){console.warn('AIS side 2:',e);}}
- return found;
+ const u=new URL(SOURCES.ais);
+ u.searchParams.set('lat',String(zone.lat));u.searchParams.set('lon',String(zone.lon));
+ u.searchParams.set('radius_km',String(zone.radius));u.searchParams.set('limit','100');u.searchParams.set('offset','0');
+ const first=await getJSON(u),data=first?.data;
+ if(data==null)throw new Error('AIS: mangler data i svaret');
+ const rows=aisRows(first);
+ const expected=num(data.total??data.total_count??data.total_vessels??data.count??data.totalVessels);
+ // En kilde som sier den fant fartoy, men ikke gir punktdata, er ikke et bekreftet 0-resultat.
+ if(expected>0 && rows.length===0)throw new Error('AIS svarte med '+expected+' fartoy, men ingen lesbare koordinater');
+ let combined=rows;
+ if(rows.length>=100 || (expected!==null&&expected>100)){
+   u.searchParams.set('offset','100');
+   try{const more=await getJSON(u);combined=combined.concat(aisRows(more));}
+   catch(e){console.warn('AIS: side 2 mislyktes',e);}
+ }
+ return {rows:combined,expected,area:data.area??''};
 }
 async function updateAIS(){
- if(!state.ready||(!$('toggle-boat').checked&&!$('toggle-ship').checked)){state.ship=[];setData('ship-data',[]);clearAISLabels();setCounts();apiMessage('ais','Av','pending');return;}
- const seq=++state.requests.ais;apiMessage('ais','Henter …','pending');
+ if(!state.ready||(!$('toggle-boat').checked&&!$('toggle-ship').checked)){
+  state.ship=[];setData('ship-data',[]);clearAISLabels();setCounts();apiMessage('ais','Av','pending');return;
+ }
+ const seq=++state.requests.ais;apiMessage('ais','Henter fartoyposisjoner …','pending');
  try{
-   const results=await Promise.allSettled(AIS_ZONES.map(getAISZone));if(seq!==state.requests.ais)return;
-   const fulfilled=results.filter(r=>r.status==='fulfilled');if(!fulfilled.length)throw results[0].reason||new Error('AIS utilgjengelig');
-   const dedup=new Map();for(const r of fulfilled)for(const item of r.value){const feat=aisFeature(item);if(!feat)continue;const p=feat.properties;
-     const id=p.mmsi||p.name+' '+feat.geometry.coordinates.join(',');const prior=dedup.get(id);
-     if(!prior||Date.parse(p.updated)>Date.parse(prior.properties.updated))dedup.set(id,feat);
-   }
-   state.ship=[...dedup.values()];setData('ship-data',state.ship);syncAISLabels();setCounts();
-   const partial=fulfilled.length<results.length;apiMessage('ais',clock()+' · '+(partial?'delvis dekning':'sist kjente posisjoner')+(state.ship.length?'':' · ingen treff'),partial?'pending':'ok');
-   state.lastAIS=Date.now();updateStamp();
- }catch(e){if(seq!==state.requests.ais)return;apiMessage('ais','Feil · AIS ikke tilgjengelig','fail');$('count-boat').textContent=$('toggle-boat').checked?'!':'–';$('count-ship').textContent=$('toggle-ship').checked?'!':'–';console.warn('AIS:',e);global('AIS-kilden svarer ikke; båtposisjoner kan ikke bekreftes','fail');}
+  const results=await Promise.allSettled(AIS_ZONES.map(getAISZone));if(seq!==state.requests.ais)return;
+  const fulfilled=results.filter(r=>r.status==='fulfilled');
+  if(!fulfilled.length)throw results[0].reason||new Error('AIS utilgjengelig');
+  const dedup=new Map();let rawRows=0;
+  for(const r of fulfilled){for(const item of r.value.rows){rawRows++;const feat=aisFeature(item);if(!feat)continue;
+    const p=feat.properties,id=p.mmsi||p.name+' '+feat.geometry.coordinates.join(',');
+    const prior=dedup.get(id);
+    if(!prior||Date.parse(p.updated)>Date.parse(prior.properties.updated)||!Number.isFinite(Date.parse(prior.properties.updated)))dedup.set(id,feat);
+  }}
+  // Ikke feiltolk datafeil som tom fjord dersom kilden returnerer ukjent responsformat.
+  if(rawRows>0 && dedup.size===0)throw new Error('AIS leverte '+rawRows+' fartoy, men ingen gyldige posisjoner i fjordomradet');
+  state.ship=[...dedup.values()];setData('ship-data',state.ship);syncAISLabels();setCounts();
+  const partial=fulfilled.length<results.length;
+  let status=clock()+' · '+state.ship.length+' fartoyposisjoner';
+  if(partial)status+=' · delvis dekning';
+  if(!state.ship.length)status+=' · ingen treff i omradet';
+  apiMessage('ais',status,partial?'pending':'ok');
+  state.lastAIS=Date.now();updateStamp();
+  if(partial)console.warn('AIS delvis dekning:',results.filter(r=>r.status==='rejected').map(r=>String(r.reason)));
+ }catch(e){
+  if(seq!==state.requests.ais)return;
+  apiMessage('ais','Feil · '+String(e.message||e).slice(0,110),'fail');
+  $('count-boat').textContent=$('toggle-boat').checked?'!':'–';$('count-ship').textContent=$('toggle-ship').checked?'!':'–';
+  console.warn('AIS:',e);global('AIS-posisjoner kunne ikke leses – busskartet fortsetter','fail');
+ }
 }
 function trafficId(o){return o.point_id??o.traffic_registration_point_id??o.registration_point_id??o.id??o.identifier??'';}
 function volume(payload){const rows=findRows(payload);for(const r of rows){for(const k of ['volume','traffic_volume','vehicle_count','count','vehicles','trafficVolume','total_count']){const v=num(r[k]);if(v!==null&&v>=0)return {value:v,time:String(r.hour??r.from??r.timestamp??r.time??'Siste tilgjengelige time')};}}return null;}
