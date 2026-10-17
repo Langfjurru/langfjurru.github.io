@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
-<meta name="app-version" content="2.6">
+<meta name="app-version" content="2.7">
 <meta name="description" content="Trondheim i 3D med levende AtB-busser, klikkbare holdeplasser og sanntidsavgangstavler fra Entur.">
-<title>Trondheim · 3D og sanntidskart · v2.6</title>
+<title>Trondheim · 3D og sanntidskart · v2.7</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -123,7 +123,7 @@ body.route-focus .ship-name-tag{visibility:hidden}
 .transit-stop-touch svg{width:calc(22px * var(--stop-icon-scale, 1));height:calc(22px * var(--stop-icon-scale, 1));display:block;position:relative;z-index:1;pointer-events:none}
 @media(max-width:640px){.transit-stop-touch{--stop-touch-size:39px}}
 
-/* v2.6: Yr-kartmodul som separat, isolert værpanel. Kollektivlogikken er uendret. */
+/* v2.7: Yr-kartmodul som separat, isolert værpanel. Kollektivlogikken er uendret. */
 .weather-fab{position:fixed;right:14px;bottom:108px;z-index:19;background:#fff;color:#234b61;display:flex;align-items:center;gap:7px;padding:12px 14px;border:1px solid #d6e4eb;border-radius:15px;box-shadow:0 6px 26px #19354638;font-weight:800;font-size:13px;line-height:1}
 .weather-fab:hover,.weather-fab:focus-visible{background:#eaf5fa;outline:2px solid #0c91b8;outline-offset:2px}
 .weather-fab .weather-icon{font-size:21px}
@@ -141,6 +141,18 @@ body.route-focus .ship-name-tag{visibility:hidden}
 .weather-content{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 12px 14px;gap:8px}
 .weather-iframe-wrap{flex:1;min-height:180px;border-radius:14px;background:#e5edf0;overflow:hidden;position:relative;border:1px solid #d8e3e7}
 .weather-iframe-wrap iframe{display:block;width:100%;height:100%;border:0;background:#eff4f6}
+.weather-iframe-wrap iframe[hidden]{display:none!important}
+.weather-setup{height:100%;width:100%;overflow:auto;background:linear-gradient(145deg,#f4fbff,#f8fbfc);color:#294150;display:grid;place-items:center;padding:18px 16px}
+.weather-setup[hidden]{display:none!important}
+.weather-setup-inner{max-width:390px;display:flex;flex-direction:column;align-items:center;gap:11px;text-align:center}
+.weather-setup-icon{font-size:38px;line-height:1}
+.weather-setup strong{font-size:18px;line-height:1.2}
+.weather-setup p{font-size:13px;line-height:1.52;color:#516572;margin:0}
+.weather-setup small{font-size:11px;line-height:1.45;color:#667d88}
+.weather-setup-inner a,.weather-setup-inner button{display:block;text-decoration:none;border-radius:12px;border:1px solid #b5d5e0;font-weight:800;font-size:13px;cursor:pointer;padding:11px 14px;width:min(100%,290px)}
+.weather-setup-inner .weather-open-button{background:#11779b;color:white;border-color:#11779b}
+.weather-setup-inner button{background:white;color:#16647d}
+
 .weather-note{font-size:11px;line-height:1.42;color:#576d77;margin:0;padding:0 2px}
 .weather-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;padding:4px 2px}
 .weather-links a{font-size:11px;font-weight:750;color:#006e93;text-decoration:underline;text-underline-offset:3px}
@@ -175,7 +187,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.6</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.6">v2.6</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.7</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.7">v2.7</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · animert langs veg · GPS ca. kvart 10. sekund<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><span id="bus3d-status" class="state" role="status">Laster detaljerte 3D-busser …</span><input id="toggle-road" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"><input id="toggle-bus3d" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
@@ -210,7 +222,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
  <div class="departure-foot"><span>Entur · tider kan endre seg</span><span id="departure-updated">–</span></div>
 </section>
 
-<!-- v2.6: Værvisningen er en ekstern Yr-modul og påvirker ikke busskartets lag. -->
+<!-- v2.7: Værvisningen er en ekstern Yr-modul og påvirker ikke busskartets lag. -->
 <button type="button" id="weather-launch" class="weather-fab" aria-controls="weather-shell" aria-expanded="false" title="Vis Yr værkart for Trondheim"><span class="weather-icon" aria-hidden="true">🌦</span><span>Yr vær</span></button>
 <aside class="weather-shell" id="weather-shell" aria-label="Værvarsel fra Yr, Trondheim" hidden>
   <header class="weather-head">
@@ -223,10 +235,22 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
     </div>
   </header>
   <div class="weather-content">
-    <div class="weather-iframe-wrap"><iframe id="weather-frame" title="Yr animert værkart Trondheim" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+    <div class="weather-iframe-wrap">
+      <iframe id="weather-frame" title="Yr animert værkart Trondheim" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      <div id="weather-setup" class="weather-setup" hidden>
+        <div class="weather-setup-inner">
+          <span class="weather-setup-icon" aria-hidden="true">🌧️</span>
+          <strong>Nedbørskart fra Yr</strong>
+          <p>Den tidligere lenken gav 404. Vi viser ikke lenger en ugyldig Yr-modul. For å bygge inn nedbørskartet trenger vi koden som Yr selv genererer.</p>
+          <a class="weather-open-button" href="https://www.yr.no/nb/" target="_blank" rel="noopener noreferrer">Se nedbør på Yr ↗</a>
+          <button id="weather-setup-code" type="button">Legg inn nedbørsmodul fra Yr</button>
+          <small>Velg «Kart» og deretter «Nedbør» på Yr. I modulbyggeren velger du Trondheim og «Vis kode».</small>
+        </div>
+      </div>
+    </div>
     <p class="weather-note" id="weather-note">Yr oppdaterer værkartene automatisk. Bruk tidslinjen inne i kartet. Dersom Yr begrenser innbyggingen i nettleseren din, åpne kartet direkte.</p>
-    <div class="weather-links"><a id="weather-open-yr" href="https://www.yr.no/nb/moduler" target="_blank" rel="noopener noreferrer">Åpne kartet hos Yr ↗</a><a href="https://www.yr.no/nb/moduler" target="_blank" rel="noopener noreferrer">Yrs modulbygger ↗</a></div>
-    <details class="weather-settings" id="weather-settings"><summary>Tilpass Yr-modulen (valgfritt)</summary>
+    <div class="weather-links"><a id="weather-open-yr" href="https://www.yr.no/nb/" target="_blank" rel="noopener noreferrer">Åpne kartet hos Yr ↗</a><a href="https://www.yr.no/nb/moduler" target="_blank" rel="noopener noreferrer">Yrs modulbygger ↗</a></div>
+    <details class="weather-settings" id="weather-settings"><summary>Legg inn Yr-modul fra «Vis kode»</summary>
       <div class="config-wrap"><label for="weather-url">Lim inn moduladresse eller innbyggingskode fra «Vis kode» på Yr</label>
       <input id="weather-url" type="text" placeholder="https://moduler.yr.no/nb/kart/..." autocomplete="off" spellcheck="false">
       <button id="weather-save" type="button">Bruk denne Yr-modulen</button>
@@ -234,7 +258,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
     </details>
   </div>
 </aside>
-<div class="bottom-credit"><b>3D Trondheim · v2.6</b><br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
+<div class="bottom-credit"><b>3D Trondheim · v2.7</b><br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
@@ -1265,37 +1289,51 @@ window.addEventListener('visibilitychange',()=>{if(document.hidden){if(busRaf)ca
 });
 </script>
 <script>
-/* Isolert Yr-integrasjon: rører ikke Entur, GPS, 3D-modeller eller sanntidsavganger. */
+/* Isolert Yr-integrasjon v2.7: fjerner uverifisert nedbørs-iframe, bevarer resten av appen. */
 (function(){
 'use strict';
 const E=id=>document.getElementById(id);
 const opener=E('weather-launch'),shell=E('weather-shell'),frame=E('weather-frame'),tabs=[E('weather-temp'),E('weather-rain')];
+const setup=E('weather-setup'),frameWrap=frame.parentElement;
 const srcBase='https://moduler.yr.no/nb/kart/';
-// Yr sin offentlig publiserte iframe-struktur. Grensene er satt til Trondheim by.
+// Bare temperatur har en dokumentert, offentlig moduladresse. Nedbør krever Yr-generert iframe-kode.
 const bounds='63.49%2C10.59%2C63.36%2C10.21';
-const defaults={temperature:srcBase+'temperatur/?bounds='+bounds+'&play=&speed=2',rain:srcBase+'nedbor/?bounds='+bounds+'&play=&speed=2'};
+const defaults={temperature:srcBase+'temperatur/?bounds='+bounds+'&play=&speed=2',rain:null};
+const YR_HOME='https://www.yr.no/nb/';
 let active='temperature';
-const getStored=(key)=>{try{return localStorage.getItem('trondheimYrModule:'+key);}catch(_){return null;}};
+const getStored=key=>{try{return localStorage.getItem('trondheimYrModule:'+key);}catch(_){return null;}};
 const store=(key,url)=>{try{localStorage.setItem('trondheimYrModule:'+key,url);}catch(_){}};
 function safeUrl(input){
  let raw=String(input||'').trim();
  const match=raw.match(/(?:src\s*=\s*["'])(https?:[^"']+)(?:["'])/i);
- if(match)raw=match[1].replace(/&amp;/g,'&');
- try{let u=new URL(raw);if(u.protocol!=='https:'||u.hostname!=='moduler.yr.no')return null;return u.href;}catch(_){return null;}
+ if(match)raw=match[1];
+ raw=raw.replace(/&amp;/g,'&');
+ try{
+   const u=new URL(raw);
+   if(u.protocol!=='https:'||u.hostname!=='moduler.yr.no')return null;
+   // Avvis den kjente døde URL-en fra v2.6, også dersom den ble lagret lokalt.
+   if(/^\/nb\/kart\/nedbor\/?$/i.test(u.pathname))return null;
+   return u.href;
+ }catch(_){return null;}
 }
 function resizeMap(){window.dispatchEvent(new Event('resize'));try{window.trondheimResizeForYr?.();}catch(_){} }
 function select(kind){
  active=kind;
  tabs[0].setAttribute('aria-selected',String(kind==='temperature'));
  tabs[1].setAttribute('aria-selected',String(kind==='rain'));
- const custom=getStored(kind);const url=custom||defaults[kind];
- if(frame.src!==url)frame.src=url;
- E('weather-open-yr').href=url;
- E('weather-note').textContent=kind==='rain'&&!custom
- ? 'Nedbørmodulen bruker en foreløpig adresse som må bekreftes hos Yr. Hvis kartet er tomt, bruk «Yrs modulbygger» og lim inn koden under «Tilpass Yr-modulen».'
- : 'Yr oppdaterer værkartene automatisk. Juster tid inne i Yr-kartet. Fungerer ikke innbyggingen på mobilen, velg «Åpne kartet hos Yr».';
+ const custom=safeUrl(getStored(kind));
+ const url=custom||defaults[kind];
+ const missing=!url;
+ setup.hidden=!missing;
+ frame.hidden=missing;
+ if(missing){frame.removeAttribute('src');} else if(frame.getAttribute('src')!==url){frame.setAttribute('src',url);}
+ E('weather-open-yr').href=url||YR_HOME;
+ E('weather-open-yr').textContent=missing?'Åpne Yr og velg nedbør ↗':'Åpne kartet hos Yr ↗';
+ E('weather-note').textContent=missing
+  ? 'En gyldig innbyggingsadresse for Yrs nedbørskart må hentes via «Vis kode» i modulbyggeren. Den forrige antatte adressen gav 404 og er fjernet.'
+  : 'Yr oppdaterer værkartene automatisk. Juster tiden i Yr-modulen. Om innbyggingen blokkeres, velg «Åpne kartet hos Yr».';
  E('weather-url').value=custom||'';
- E('weather-config-status').textContent=custom?'Tilpasset Yr-modul er aktiv for dette kartlaget.':'Bruk bare den offisielle koden fra yr.no/nb/moduler dersom den innebygde varianten ikke vises.';
+ E('weather-config-status').textContent=custom?'Tilpasset Yr-modul er aktiv for dette kartlaget.':'Bruk «Vis kode» fra yr.no/nb/moduler og lim inn hele iframe-koden her. Koden lagres lokalt på denne enheten.';
 }
 function toggle(open){
  shell.hidden=!open;
@@ -1310,11 +1348,13 @@ opener.addEventListener('click',()=>toggle(shell.hidden));
 E('weather-close').addEventListener('click',()=>toggle(false));
 tabs[0].addEventListener('click',()=>select('temperature'));
 tabs[1].addEventListener('click',()=>select('rain'));
+E('weather-setup-code').addEventListener('click',()=>{E('weather-settings').open=true;E('weather-settings').scrollIntoView({behavior:'smooth',block:'nearest'});E('weather-url').focus();});
 E('weather-save').addEventListener('click',()=>{
  const url=safeUrl(E('weather-url').value);
- if(!url){E('weather-config-status').textContent='Ugyldig adresse. Lim inn iframe-koden fra yr.no/nb/moduler eller en https://moduler.yr.no/-lenke.';return;}
+ if(!url){E('weather-config-status').textContent='Ugyldig eller tidligere feilende adresse. Lim inn den offisielle iframe-koden fra «Vis kode» på yr.no/nb/moduler.';return;}
  store(active,url);select(active);
- E('weather-config-status').textContent='Yr-modulen er oppdatert på denne enheten.';
+ E('weather-config-status').textContent='Yr-modulen er lagt inn på denne enheten.';
+ E('weather-settings').open=false;
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!shell.hidden)toggle(false);});
 })();
