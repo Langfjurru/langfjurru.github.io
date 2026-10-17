@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
 <meta name="description" content="Trondheim i 3D – levende bussposisjoner, AIS-fartøy og trafikktellepunkter fra åpne datakilder.">
-<title>Trondheim · 3D og sanntidskart · v1.4</title>
+<title>Trondheim · 3D og sanntidskart · v1.5</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -28,6 +28,7 @@ details{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}summar
 /* V1.4: Markorene MAA vaere absolute. En tidligere position:relative
    overstyrte MapLibres .maplibregl-marker og fikk boblene til a drive
    i vanlig dokumentflyt, bort fra GPS-koordinatet. */
+.road-option{display:inline-flex;align-items:center;gap:5px;margin-top:4px;color:#485c65;font-size:11px;font-weight:650;cursor:pointer}.road-option input{accent-color:#ce2938;margin:0}
 .bus-route-badge{position:absolute;display:flex;align-items:center;justify-content:center;min-width:22px;min-height:18px;padding:2px 4px;border:1.5px solid #c72735;border-radius:6px;background:#fff;color:#9e1624;font:800 10px/1.05 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;white-space:nowrap;box-shadow:0 2px 5px rgba(30,32,36,.28);font-variant-numeric:tabular-nums;cursor:pointer;user-select:none;touch-action:manipulation;z-index:1}
 .bus-route-badge:after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:4px solid #c72735}
 .bus-route-badge:focus-visible{outline:2px solid #ffcc62;outline-offset:2px}
@@ -43,7 +44,7 @@ details{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}summar
   <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v1.3</div><h1 class="headtitle">Trondheim</h1><p class="tagline">Busser, hurtigbåter og trafikk i sanntid</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
-   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · jevn animasjon · hentes ca. hvert 10. sek</div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
+   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · jevn animasjon · hentes ca. hvert 10. sek<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><label class="road-option"><input id="toggle-road" type="checkbox" checked> Følg vegnettet (beta)</label></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-boat" type="checkbox" checked aria-label="Vis passasjerbåter"><div><div class="layer-name"><span class="chip boat"></span>Hurtigbåter*</div><div class="layer-note">AIS · passasjer / høy hastighet</div></div></div><div class="data-right"><span class="num" id="count-boat">–</span></div></div>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-ship" type="checkbox" checked aria-label="Vis andre fartøy"><div><div class="layer-name"><span class="chip ship"></span>Andre skip</div><div class="layer-note">AIS · siste kjente posisjon</div></div></div><div class="data-right"><span class="num" id="count-ship">–</span></div></div>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-traffic" type="checkbox" aria-label="Vis biltrafikk"><div><div class="layer-name"><span class="chip traffic"></span>Biltrafikk</div><div class="layer-note">Vegvesenet · timesverdier</div></div></div><div class="data-right"><span class="num" id="count-traffic">–</span></div></div>
@@ -52,7 +53,7 @@ details{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}summar
    <div class="buttons"><button id="follow" class="action primary" type="button" disabled>Følg en buss</button><button id="home" class="action" type="button">Til sentrum</button></div>
    <div class="smallbuttons"><button id="refresh" class="link-button" type="button">↻ Oppdater kilder</button><span style="font-size:11px;color:#657681" id="refreshed">Venter på oppdatering</span></div>
    <div class="diagnostics" aria-live="polite"><div class="statusline" id="global-status"><span class="live"></span> Initialiserer kartet …</div><div class="api-grid"><span>Entur / busser</span><span id="state-bus" class="pending">Venter</span><span>Allemannsdata / AIS</span><span id="state-ais" class="pending">Venter</span><span>Allemannsdata / trafikk</span><span id="state-traffic" class="pending">Av</span></div><p class="info">*Hurtigbåtklassifisering baseres på AIS-type/navn og kan inkludere andre passasjerbåter. Tomme lag kan skyldes manglende data eller nettlesertilgang.</p></div>
-   <details><summary>Om kartet og datakildene</summary><p>Bakgrunnskart: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> / OpenStreetMap. 3D-terreng: <a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener">Mapterhorn</a>. Bygninger: OSM-høyder (ikke Kartverkets NHM-modell). Busser: <a href="https://developer.entur.no/docs/open-services/vehicle-positions" target="_blank" rel="noopener">Entur</a>. Skip og Vegvesen: <a href="https://allemannsdata.com/wiki/" target="_blank" rel="noopener">Allemannsdata</a>. AIS oppdateres omtrent hvert minutt, men den underliggende posisjonen kan være eldre. Vegvesen leverer siste tilgjengelige hele timer, ikke løpende GPS. Bussene animeres mellom mottatte GPS-posisjoner; plasseringen underveis er estimert og følger ikke nødvendigvis vegtraseen.</p><p>3D: høyreklikk + dra på PC eller bruk to fingre på mobilen. Klikk på busser, fartøy, tellepunkter eller bygninger for detaljer. Anbefalt: publiser filen på en vanlig HTTPS-side som GitHub Pages. En lokal Android content://-adresse kan hindre kartfliser og API-kall. Dersom kartet er tomt, bruk knappen for 2D-reservekart.</p></details>
+   <details><summary>Om kartet og datakildene</summary><p>Bakgrunnskart: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> / OpenStreetMap. 3D-terreng: <a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener">Mapterhorn</a>. Bygninger: OSM-høyder (ikke Kartverkets NHM-modell). Busser: <a href="https://developer.entur.no/docs/open-services/vehicle-positions" target="_blank" rel="noopener">Entur</a>. Skip og Vegvesen: <a href="https://allemannsdata.com/wiki/" target="_blank" rel="noopener">Allemannsdata</a>. AIS oppdateres omtrent hvert minutt, men den underliggende posisjonen kan være eldre. Vegvesen leverer siste tilgjengelige hele timer, ikke løpende GPS. Bussene animeres mellom mottatte GPS-posisjoner. I v1.5 beregnes mellomliggende punkter langs veger fra OpenStreetMap når kartflisene og GPS-kvaliteten tillater det. Dette er anslatt vegvalg mellom GPS-fikser, ikke en kontrollert planlagt AtB-avgang eller garantert korrekt linjetrasé. Uten sikker match brukes den tidligere jevne animasjonen.</p><p>3D: høyreklikk + dra på PC eller bruk to fingre på mobilen. Klikk på busser, fartøy, tellepunkter eller bygninger for detaljer. Anbefalt: publiser filen på en vanlig HTTPS-side som GitHub Pages. En lokal Android content://-adresse kan hindre kartfliser og API-kall. Dersom kartet er tomt, bruk knappen for 2D-reservekart.</p></details>
   </div>
  </div>
 </aside>
@@ -63,7 +64,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 const $=id=>document.getElementById(id);
 const SOURCES={entur:'https://api.entur.io/realtime/v2/vehicles/graphql',ais:'https://allemannsdata.com/wiki/api/v1/kilder/ais/get_area_traffic',traffic:'https://allemannsdata.com/wiki/api/v1/kilder/vegvesen/find_traffic_points',volume:'https://allemannsdata.com/wiki/api/v1/kilder/vegvesen/get_traffic_volume'};
 const FJORD={lat:63.48,lon:10.25,radius:90};
-// Jevn visning mellom bekreftede GPS-maalinger. Bevegelsen stopper ved siste mottatte punkt.
+// Beholder dokumentert v1.4-animasjon; v1.5 legger til valgfri vegbasert sti per GPS-endring.
 const BUS_POLL_MS=10000, BUS_BLEND_MS=10300, BUS_DRAW_MS=100;
 const AREAS={city:{center:[10.3951,63.4305],zoom:14.25,pitch:64,bearing:-20},fjord:{center:[10.18,63.525],zoom:10.55,pitch:58,bearing:-26},vanvikan:{center:[10.220,63.556],zoom:12.5,pitch:58,bearing:-25},brekstad:{center:[9.662,63.687],zoom:12.6,pitch:59,bearing:-32}};
 const geoEmpty=()=>({type:'FeatureCollection',features:[]});
@@ -163,35 +164,188 @@ function travelBearing(a,b){const p=a[1]*Math.PI/180,q=b[1]*Math.PI/180,d=(b[0]-
  return (Math.atan2(y,x)*180/Math.PI+360)%360;
 }
 function blendAngle(a,b,t){return (a+(((b-a+540)%360)-180)*t+360)%360;}
+
+// v1.5: Lokal veggraf fra de vektorflisene som ALLEREDE er lastet i MapLibre.
+// Ingen ekstra rutingserver, ingen API-nokkel, og ingen eksterne kall pr buss.
+// Kun realistiske vegsegmenter; ingen gjetning om en buss sin spesifikke avgang.
+const ROAD_CLASS_OK=new Set(['motorway','trunk','primary','secondary','tertiary','minor','residential','unclassified','service','living_street','busway','street','road']);
+let roadGraph=null,roadGraphAt=0,roadGraphFocus=null,roadRouteMatches=0,roadRouteEligible=0;
+const ROAD_MIN_ZOOM=12.0, ROAD_MAX_SNAP_M=32;
+function xyMeters(p,refLat){return [p[0]*111320*Math.cos(refLat*Math.PI/180),p[1]*111320];}
+function squaredPointToEdge(p,a,b){
+ const lat=p[1],P=xyMeters(p,lat),A=xyMeters(a,lat),B=xyMeters(b,lat),dx=B[0]-A[0],dy=B[1]-A[1];
+ const f=dx*dx+dy*dy>1e-8?Math.max(0,Math.min(1,((P[0]-A[0])*dx+(P[1]-A[1])*dy)/(dx*dx+dy*dy))):0;
+ const foot=[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f];return {foot,f,dist:metersBetween(p,foot)};
+}
+function uniquePath(path){const result=[];for(const p of path)if(!result.length||metersBetween(result[result.length-1],p)>.2)result.push(p);return result;}
+function roadPathStats(path){let length=0;const cumulative=[0];for(let i=1;i<path.length;i++){length+=metersBetween(path[i-1],path[i]);cumulative.push(length);}return {cumulative,length};}
+function makeRoadGraph(features){
+ const nodes=[],nodeIndex=new Map(),edges=[],cells=new Map();
+ const key=p=>Math.round(p[0]*1e5)+':'+Math.round(p[1]*1e5);
+ function node(p){const k=key(p);let id=nodeIndex.get(k);if(id===undefined){id=nodes.length;nodeIndex.set(k,id);nodes.push({p:[...p],adj:[]});}return id;}
+ function cellKey(x,y){return x+':'+y;}
+ const seen=new Set();
+ for(const feature of features){
+  const cls=String(feature.properties?.class??feature.properties?.highway??'').toLowerCase();
+  if(!ROAD_CLASS_OK.has(cls))continue;
+  const geom=feature.geometry;if(!geom)continue;
+  const lines=geom.type==='LineString'?[geom.coordinates]:geom.type==='MultiLineString'?geom.coordinates:[];
+  for(const line of lines){
+   if(!Array.isArray(line))continue;
+   for(let j=1;j<line.length;j++){
+    const a=line[j-1],b=line[j];if(!Array.isArray(a)||!Array.isArray(b)||!goodCoords(a[0],a[1])||!goodCoords(b[0],b[1]))continue;
+    const d=metersBetween(a,b);if(d<.5||d>1500)continue;
+    const ia=node(a),ib=node(b);if(ia===ib)continue;
+    const ek=ia<ib?ia+':'+ib:ib+':'+ia;if(seen.has(ek))continue;seen.add(ek);
+    const id=edges.length;edges.push({a:ia,b:ib,length:d});
+    nodes[ia].adj.push([ib,d]);nodes[ib].adj.push([ia,d]);
+    const x0=Math.floor(Math.min(a[0],b[0])/.002),x1=Math.floor(Math.max(a[0],b[0])/.002);
+    const y0=Math.floor(Math.min(a[1],b[1])/.002),y1=Math.floor(Math.max(a[1],b[1])/.002);
+    if((x1-x0+1)*(y1-y0+1)>120)continue;
+    for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){
+     const k=cellKey(x,y);if(!cells.has(k))cells.set(k,[]);cells.get(k).push(id);
+    }
+   }
+  }
+ }
+ return {nodes,edges,cells};
+}
+function nearestRoad(graph,pos,maxDistance=ROAD_MAX_SNAP_M){
+ if(!graph||!graph.edges.length)return null;
+ const xi=Math.floor(pos[0]/.002),yi=Math.floor(pos[1]/.002);let best=null;const checked=new Set();
+ for(let x=xi-1;x<=xi+1;x++)for(let y=yi-1;y<=yi+1;y++){
+  for(const id of graph.cells.get(x+':'+y)||[]){
+   if(checked.has(id))continue;checked.add(id);
+   const edge=graph.edges[id],a=graph.nodes[edge.a].p,b=graph.nodes[edge.b].p;
+   const proj=squaredPointToEdge(pos,a,b);
+   if(proj.dist<=maxDistance&&(!best||proj.dist<best.dist))best={...proj,edge};
+  }
+ }
+ return best;
+}
+function getRoadGraph(){
+ if(!$('toggle-road').checked)return null;
+ if(state.mapMode!=='vector'||map.getZoom()<ROAD_MIN_ZOOM)return null;
+ const center=map.getCenter(),now=Date.now();
+ if(roadGraph && now-roadGraphAt<40000 && roadGraphFocus && metersBetween(roadGraphFocus,[center.lng,center.lat])<180 && Math.abs(map.getZoom()-roadGraphFocus[2])<.8)return roadGraph;
+ try{
+  // Kartstilens vektorveier er de samme OSM-dataene som bakgrunnskartet.
+  const styles=map.getStyle()?.sources||{};
+  const ids=[...Object.entries(styles).filter(([,src])=>src.type==='vector').map(([id])=>id),'buildings-source'];
+  for(const id of [...new Set(ids)]){
+   if(!map.getSource(id))continue;
+   const rows=map.querySourceFeatures(id,{sourceLayer:'transportation'});
+   if(rows?.length>5){const g=makeRoadGraph(rows);if(g.edges.length>25){roadGraph=g;roadGraphAt=now;roadGraphFocus=[center.lng,center.lat,map.getZoom()];return g;}}
+  }
+ }catch(e){console.warn('Vegtilpasning ikke tilgjengelig:',e?.message||e);}
+ return null;
+}
+function roadBetween(graph,rawStart,rawEnd){
+ const start=nearestRoad(graph,rawStart),end=nearestRoad(graph,rawEnd);
+ if(!start||!end)return null;
+ const dist=metersBetween(rawStart,rawEnd);
+ if(dist<1||dist>1200)return null;
+ const maxLen=Math.max(dist*2.4,dist+125);
+ let path=null;
+ if(start.edge===end.edge){path=[start.foot,end.foot];}
+ else{
+  const N=graph.nodes.length,distances=new Float64Array(N),previous=new Int32Array(N),visited=new Uint8Array(N);
+  distances.fill(Infinity);previous.fill(-1);
+  const heap=[];
+  const push=(n,d)=>{let i=heap.length;heap.push({n,d});while(i>0){const parent=(i-1)>>1;if(heap[parent].d<=d)break;heap[i]=heap[parent];i=parent;}heap[i]={n,d};};
+  const pop=()=>{const first=heap[0],last=heap.pop();if(heap.length){let i=0;while(2*i+1<heap.length){let c=2*i+1;if(c+1<heap.length&&heap[c+1].d<heap[c].d)c++;if(last.d<=heap[c].d)break;heap[i]=heap[c];i=c;}heap[i]=last;}return first;};
+  const se=start.edge,ee=end.edge;
+  for(const [n,d] of [[se.a,start.f*se.length],[se.b,(1-start.f)*se.length]]){
+   if(d<distances[n]){distances[n]=d;previous[n]=-1;push(n,d);}
+  }
+  const goal=new Map([[ee.a,end.f*ee.length],[ee.b,(1-end.f)*ee.length]]);
+  const mid=[(rawStart[0]+rawEnd[0])/2,(rawStart[1]+rawEnd[1])/2];
+  const radius=Math.min(1600,Math.max(280,dist*1.7+100));
+  let best=Infinity,bestNode=-1,expanded=0;
+  while(heap.length&&expanded<3400){
+   const item=pop(),u=item.n,du=item.d;
+   if(visited[u]||du!==distances[u]||du>maxLen+80||du>best)continue;
+   visited[u]=1;expanded++;
+   if(goal.has(u)&&du+goal.get(u)<best){best=du+goal.get(u);bestNode=u;}
+   for(const [v,w] of graph.nodes[u].adj){
+    if(visited[v])continue;
+    const p=graph.nodes[v].p;
+    if(metersBetween(mid,p)>radius)continue;
+    const nd=du+w;if(nd<distances[v]&&nd<best){distances[v]=nd;previous[v]=u;push(v,nd);}
+   }
+  }
+  if(bestNode<0||best>maxLen)return null;
+  const chain=[];let u=bestNode;for(let i=0;i<3400&&u>=0;i++){chain.push(graph.nodes[u].p);u=previous[u];}
+  chain.reverse();path=[start.foot,...chain,end.foot];
+ }
+ path=uniquePath(path);if(path.length<2)return null;
+ const s=roadPathStats(path);if(s.length>maxLen)return null;
+ return {path,cumulative:s.cumulative,length:s.length,startSnap:start.dist,endSnap:end.dist};
+}
+function roadPolylinePosition(path,cumulative,d){
+ if(!path||path.length<2||!cumulative)return null;
+ const total=cumulative[cumulative.length-1];d=Math.max(0,Math.min(total,d));
+ for(let i=1;i<cumulative.length;i++){
+  if(d<=cumulative[i]||i===cumulative.length-1){const a=path[i-1],b=path[i],delta=cumulative[i]-cumulative[i-1],f=delta>0?(d-cumulative[i-1])/delta:0;
+   return {coords:[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f],bearing:travelBearing(a,b)};
+  }
+ }
+ return {coords:path[path.length-1],bearing:0};
+}
+function setRoadMatchStatus(){
+ const el=$('road-match-status');if(!el)return;
+ if(!$('toggle-road').checked){el.textContent='Vegtilpasning: av · v1.4-animasjon';return;}
+ if(state.mapMode==='raster'||map.getZoom()<ROAD_MIN_ZOOM){el.textContent='Vegtilpasning: tilgjengelig ved nærmere zoom';return;}
+ if(!roadGraph){el.textContent='Vegtilpasning: venter på OSM-vegdata';return;}
+ el.textContent='Vegtilpasning: '+roadRouteMatches+' av '+roadRouteEligible+' bevegelser langs veg';
+}
+
 function busPosition(track,now){
  const f=track.toMs<=track.fromMs?1:Math.max(0,Math.min(1,(now-track.fromMs)/(track.toMs-track.fromMs)));
- return {coords:[track.start[0]+(track.end[0]-track.start[0])*f,track.start[1]+(track.end[1]-track.start[1])*f],bearing:blendAngle(track.fromBearing,track.toBearing,f),moving:f<1 && metersBetween(track.start,track.end)>0.7};
+ const routed=track.roadPath?roadPolylinePosition(track.roadPath,track.roadCumulative,track.roadLength*f):null;
+ return {coords:routed?.coords||[track.start[0]+(track.end[0]-track.start[0])*f,track.start[1]+(track.end[1]-track.start[1])*f],bearing:routed?.bearing??blendAngle(track.fromBearing,track.toBearing,f),moving:f<1 && (track.roadLength??metersBetween(track.start,track.end))>0.7};
 }
 function clearBusAnimation(){if(busRaf)cancelAnimationFrame(busRaf);busRaf=0;busTracks.clear();lastBusDraw=0;}
 function acceptBusSnapshot(features,now=performance.now()){
  const keep=new Set();
+ const graph=getRoadGraph();roadRouteMatches=0;roadRouteEligible=0;
  for(const feat of features){
   const id=String(feat.properties.vehicleId||'');if(!id)continue;
   const dest=feat.geometry.coordinates,props=feat.properties,stamp=Date.parse(props.updated);
   keep.add(id);
   let t=busTracks.get(id);
   if(!t){const b=Number.isFinite(props.bearing)?props.bearing:0;
-   busTracks.set(id,{start:[...dest],end:[...dest],fromMs:now,toMs:now,fromBearing:b,toBearing:b,props,stamp:Number.isFinite(stamp)?stamp:null,seen:now});
+   const snap=graph?nearestRoad(graph,dest):null,initial=snap?snap.foot:dest;
+   busTracks.set(id,{start:[...initial],end:[...initial],rawGps:[...dest],fromMs:now,toMs:now,fromBearing:b,toBearing:b,props,stamp:Number.isFinite(stamp)?stamp:null,seen:now});
    continue;
   }
-  const old=busPosition(t,now),dist=metersBetween(t.end,dest);
+  const old=busPosition(t,now),dist=metersBetween(t.rawGps||t.end,dest);
   t.props=props;t.seen=now;
   if(dist<1.5)continue; // Samme GPS-fiks: ikke start animasjonen pa nytt.
   const dt=Number.isFinite(stamp)&&Number.isFinite(t.stamp)&&stamp>t.stamp ? (stamp-t.stamp)/1000 : Math.max(1,(now-t.fromMs)/1000);
   const likelyTeleport=dist>1400 || (dt>=2 && dist/dt>38); // >137 km/t eller stor feilposisjon
   const newBearing=Number.isFinite(props.bearing)?props.bearing:travelBearing(t.end,dest);
+  let road=null;
+  if(!likelyTeleport && graph){roadRouteEligible++;road=roadBetween(graph,old.coords,dest);if(road)roadRouteMatches++;}
+  t.roadPath=null;t.roadCumulative=null;t.roadLength=null;
+  if(road){
+    // Bind starten til FORRIGE animerte posisjon og avslutningen til den snappede vegposisjonen.
+    // En kort korreksjon for GPS-feil tas jevnt i samme animasjonsperiode.
+    const path=uniquePath([old.coords,...road.path]);
+    const stat=roadPathStats(path);
+    if(stat.length>1 && stat.length<Math.max(2.8*dist,dist+165)){
+     t.roadPath=path;t.roadCumulative=stat.cumulative;t.roadLength=stat.length;
+    }
+  }
   t.start=likelyTeleport?[...dest]:old.coords;
-  t.end=[...dest];t.fromMs=now;t.toMs=likelyTeleport?now:now+BUS_BLEND_MS;
+  t.end=t.roadPath?[...t.roadPath[t.roadPath.length-1]]:[...dest];
+  t.rawGps=[...dest];t.fromMs=now;t.toMs=likelyTeleport?now:now+BUS_BLEND_MS;
   t.fromBearing=likelyTeleport?newBearing:old.bearing;
   t.toBearing=newBearing;
   t.stamp=Number.isFinite(stamp)?stamp:null;
  }
  for(const id of busTracks.keys())if(!keep.has(id))busTracks.delete(id);
+ setRoadMatchStatus();
  drawAnimatedBuses(now);
  if(!busRaf && state.ready && $('toggle-bus').checked && !document.hidden)busRaf=requestAnimationFrame(busAnimationFrame);
 }
@@ -226,6 +380,7 @@ function addArt(name,fill,type){const c=document.createElement('canvas');c.width
 function registerClick(id,makeHtml){map.on('click',id,e=>{const f=e.features?.[0];if(!f)return;let at=f.geometry?.coordinates;if(!Array.isArray(at)||typeof at[0]!=='number')at=e.lngLat.toArray();new maplibregl.Popup({offset:12,maxWidth:'290px'}).setLngLat(at).setHTML(makeHtml(f.properties||{})).addTo(map);});map.on('mouseenter',id,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',id,()=>map.getCanvas().style.cursor='');}
 function popup(title,pairs){return '<div class="pop-title">'+htmlEscape(title)+'</div><div class="pop-kv">'+pairs.map(([a,b])=>'<span>'+htmlEscape(a)+'</span><span>'+htmlEscape(b)+'</span>').join('')+'</div>';}
 function initMap(){
+ roadGraph=null;roadGraphAt=0;roadGraphFocus=null;setRoadMatchStatus();
  // Høyde-DEM kobles bare inn når brukeren velger 3D-terreng; svikt i DEM skal ikke stoppe bakgrunnskartet.
  if(state.mapMode==='vector'){
   map.addSource('buildings-source',{type:'vector',url:'https://tiles.openfreemap.org/planet',attribution:'© OpenStreetMap contributors / OpenFreeMap'});
@@ -305,6 +460,7 @@ map.on('moveend',()=>{const c=map.getCenter();$('coordinates').textContent=c.lat
 for(const b of document.querySelectorAll('[data-area]'))b.addEventListener('click',()=>{document.querySelectorAll('[data-area]').forEach(n=>n.classList.toggle('active',n===b));state.followId=null;const p=AREAS[b.dataset.area];map.flyTo({...p,speed:1.5,essential:true});});
 $('home').addEventListener('click',()=>document.querySelector('[data-area="city"]').click());$('refresh').addEventListener('click',()=>refreshAll(true));
 $('collapse').addEventListener('click',()=>{const closed=$('panel').classList.toggle('collapsed');$('collapse').setAttribute('aria-expanded',String(!closed));$('collapse').setAttribute('aria-label',closed?'Vis kartmenyen':'Skjul kartmenyen');});
+$('toggle-road').addEventListener('change',()=>{roadGraph=null;roadGraphAt=0;setRoadMatchStatus();});
 $('toggle-bus').addEventListener('change',e=>{setVisible('bus-vehicles',e.target.checked);if(e.target.checked)updateBuses();else{state.requests.bus++;state.bus=[];clearBusAnimation();clearBusRouteLabels();setData('bus-data',[]);setCounts();apiMessage('bus','Av','pending');}});
 function changeAIS(){setVisible('fast-vessels',$('toggle-boat').checked);setVisible('other-vessels',$('toggle-ship').checked);if(!state.lastAIS||(!state.ship.length&&($('toggle-boat').checked||$('toggle-ship').checked)))updateAIS();else{setCounts();if(!$('toggle-boat').checked&&!$('toggle-ship').checked)apiMessage('ais','Av','pending');}}
 $('toggle-boat').addEventListener('change',changeAIS);$('toggle-ship').addEventListener('change',changeAIS);
