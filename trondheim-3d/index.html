@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#f7f8f6">
+<meta name="description" content="Trondheim i 3D – levende bussposisjoner, AIS-fartøy og trafikktellepunkter fra åpne datakilder.">
+<title>Trondheim · 3D og sanntidskart · v1.1</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#212c35;--white:#fff;--muted:#66717c;--line:#e1e5e6;--shadow:0 14px 42px rgba(24,39,52,.17)}
+*{box-sizing:border-box}html,body{height:100%;width:100%;margin:0;overflow:hidden}body{background:#dce3df}button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #ffb545;outline-offset:2px}
+#map{position:absolute;inset:0}.maplibregl-ctrl-top-right{top:14px;right:14px}.maplibregl-ctrl-bottom-right{bottom:20px;right:14px}.maplibregl-ctrl-group{border-radius:12px!important;overflow:hidden;box-shadow:0 4px 14px #0002!important}.maplibregl-ctrl-attrib{font-size:10px!important}
+.sidebar{position:absolute;top:16px;left:16px;z-index:11;width:385px;max-width:calc(100vw - 90px);max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;background:rgba(255,255,255,.97);border:1px solid rgba(255,255,255,.7);border-radius:24px;box-shadow:var(--shadow);backdrop-filter:blur(18px)}.pane{padding:22px 22px 20px}.topline{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.brand{display:flex;gap:7px;align-items:center;color:#69747b;font-size:10px;letter-spacing:1.8px;font-weight:850;text-transform:uppercase;margin-bottom:8px}.live{display:inline-block;width:8px;height:8px;background:#23ab71;border-radius:100%;box-shadow:0 0 0 4px #23ab7122;flex-shrink:0}.headtitle{font-size:29px;line-height:1.1;letter-spacing:-1.2px;font-weight:820;margin:0}.tagline{font-size:14px;color:#5f6874;margin:9px 0 2px;line-height:1.45}.minimise{background:#f0f2f3;border:none;border-radius:12px;width:38px;height:38px;flex:none;font-size:20px;font-weight:750;color:#39424a}.minimise:hover{background:#e5e9ec}
+.pane-body{margin-top:20px}.area-bar{display:flex;gap:5px;padding:4px;background:#eff3f3;border-radius:13px;margin-bottom:15px}.area-bar button{flex:1;min-width:0;padding:10px 3px;border:0;background:transparent;border-radius:10px;color:#56656c;font-weight:760;font-size:12px}.area-bar button.active{background:#fff;color:#172e31;box-shadow:0 2px 7px #0001}
+.layer{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line)}.layer-left{display:flex;gap:11px;align-items:center;min-width:0}.pict{width:37px;height:35px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:20px;background:#f2f4f5}.layer-name{font-size:16px;font-weight:730;color:#253039;letter-spacing:-.25px;display:flex;align-items:center;gap:7px;line-height:1.25}.layer-note{font-size:12px;color:#6b737c;margin-top:4px;line-height:1.35}.data-right{display:flex;align-items:center;gap:12px;flex-shrink:0}.num{font-size:17px;font-weight:810;min-width:22px;text-align:right;font-variant-numeric:tabular-nums}.state{font-size:11px;font-weight:600;color:#77818a}.state.good{color:#127c4c}.state.bad{color:#b84343}.state.wait{color:#a56c17}.switch{appearance:none;width:21px;height:21px;flex:none;margin:0;border:2px solid #c0c9cd;border-radius:5px;cursor:pointer;background:#fff;position:relative}.switch:checked{background:#253748;border-color:#253748}.switch:checked:after{content:'✓';position:absolute;color:#fff;font-size:18px;line-height:15px;font-weight:900;left:2px;top:0px}
+.chip{width:17px;height:12px;display:inline-block;border-radius:4px;background:var(--chip);border:1px solid #0001;flex:none}.chip.bus{width:25px;background:#e22d34;border-bottom:4px solid #8d1b21}.chip.boat{clip-path:polygon(0 0,72% 0,100% 50%,72% 100%,0 100%);width:25px;background:#087d9c;border:0}.chip.ship{clip-path:polygon(0 0,72% 0,100% 50%,72% 100%,0 100%);width:25px;background:#5b7088;border:0}.chip.traffic{background:linear-gradient(90deg,#fbc967,#ce782c);width:24px}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}.action{border-radius:13px;padding:12px 8px;font-weight:800;font-size:13px;border:1px solid #e1e5e7;background:white;color:#34444d}.action.primary{background:#dc2e37;border-color:#dc2e37;color:#fff}.action.primary:disabled{opacity:.65;cursor:not-allowed}.action:hover{filter:brightness(.97)}.smallbuttons{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:7px}.link-button{background:transparent;color:#526a7a;font-size:12px;font-weight:750;border:none;text-decoration:underline;text-underline-offset:3px;padding:5px 0}
+.diagnostics{margin-top:10px;padding:12px 13px;border-radius:12px;background:#f3f6f6;font-size:12px;color:#50616a;line-height:1.55}.diagnostics p{margin:0}.diagnostics strong{font-weight:800}.diagnostics .info{margin-top:7px}.diagnostics a{color:#0c7484}.statusline{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px;font-weight:790;letter-spacing:.2px}.api-grid{display:grid;grid-template-columns:1fr auto;gap:5px 12px;font-size:11px;margin-top:9px}.api-grid span:nth-child(even){font-variant-numeric:tabular-nums;text-align:right}.ok{color:#218657}.fail{color:#bd4545}.pending{color:#986c24}
+details{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}summary{cursor:pointer;font-weight:750;color:#35434d;font-size:13px}details p{font-size:12px;color:#5c6973;line-height:1.6}details a{color:#087a88}.bottom-credit{position:absolute;bottom:30px;left:16px;z-index:5;background:#ffffffed;padding:9px 12px;border-radius:10px;color:#415158;box-shadow:0 2px 10px #0002;font-size:11px}.bottom-credit small{font-size:10px;color:#65747e}
+.maplibregl-popup-content{font:inherit;padding:16px;border-radius:13px;min-width:190px;box-shadow:0 8px 35px #0003}.maplibregl-popup-close-button{font-size:20px}.pop-title{font-size:16px;font-weight:850;margin-right:18px;margin-bottom:8px}.pop-kv{font-size:12px;display:grid;grid-template-columns:auto 1fr;gap:5px 13px;line-height:1.5}.pop-kv>span:nth-child(odd){color:#6c7b82}.pop-kv>span:nth-child(even){text-align:right;font-weight:650;color:#27363d;word-break:break-word}
+.sidebar.collapsed{width:260px;max-height:none;overflow:hidden}.sidebar.collapsed .pane{padding:15px 17px}.sidebar.collapsed .brand,.sidebar.collapsed .tagline,.sidebar.collapsed .pane-body{display:none}.sidebar.collapsed .headtitle{font-size:20px;line-height:1.7}.sidebar.collapsed .minimise{transform:rotate(180deg)}
+@media(max-width:640px){.sidebar{left:10px;top:10px;width:calc(100vw - 84px);max-width:385px;max-height:calc(100dvh - 96px);border-radius:19px}.pane{padding:17px 16px}.headtitle{font-size:24px}.tagline{font-size:12px;margin:6px 0 0}.brand{font-size:9px;margin-bottom:6px}.pane-body{margin-top:12px}.layer{padding:9px 0;gap:7px}.layer-left{gap:7px}.pict{width:29px;height:30px;font-size:17px}.layer-name{font-size:13px;gap:5px}.layer-note{font-size:10px;margin-top:2px}.num{font-size:14px}.data-right{gap:7px}.switch{width:19px;height:19px}.switch:checked:after{font-size:15px;line-height:13px}.area-bar button{font-size:10px;padding:8px 2px}.buttons{margin-top:12px}.action{padding:10px 5px;font-size:11px}.diagnostics{font-size:11px}.maplibregl-ctrl-top-right{top:10px;right:10px}.bottom-credit{left:10px;bottom:34px;max-width:210px;padding:8px 10px}.sidebar.collapsed{width:218px}.sidebar.collapsed .headtitle{font-size:18px}}
+@media(max-width:370px){.sidebar{width:calc(100vw - 73px)}.pict{display:none}.chip{display:none}}
+.map-alert{position:absolute;left:12px;bottom:110px;right:12px;z-index:15;max-width:540px;background:#fffdf5;border:1px solid #efd5a8;padding:11px 10px 11px 13px;border-radius:14px;box-shadow:0 8px 28px #0002;font-size:12px;line-height:1.35;display:flex;align-items:center;gap:9px;color:#573b1b}.map-alert[hidden]{display:none}.map-alert span{flex:1}.map-alert button{border:0;background:#243f4e;color:#fff;border-radius:9px;padding:8px 10px;font-weight:750;font-size:11px;flex-shrink:0}.map-alert button.dismiss{background:transparent;color:#6a6f72;padding:3px 5px;font-size:20px}@media(min-width:640px){.map-alert{bottom:95px;left:16px}}
+</style>
+</head>
+<body>
+<div id="map" role="application" aria-label="Interaktivt 3D-kart over Trondheim og Trondheimsfjorden"></div>
+<div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
+<aside class="sidebar" id="panel" aria-label="Kartlag og sanntidsdata">
+ <div class="pane">
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v1.1</div><h1 class="headtitle">Trondheim</h1><p class="tagline">Busser, hurtigbåter og trafikk i sanntid</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
+  <div class="pane-body">
+   <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
+   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · ca. 20 sek</div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
+   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-boat" type="checkbox" checked aria-label="Vis passasjerbåter"><div><div class="layer-name"><span class="chip boat"></span>Hurtigbåter*</div><div class="layer-note">AIS · passasjer / høy hastighet</div></div></div><div class="data-right"><span class="num" id="count-boat">–</span></div></div>
+   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-ship" type="checkbox" checked aria-label="Vis andre fartøy"><div><div class="layer-name"><span class="chip ship"></span>Andre skip</div><div class="layer-note">AIS · siste kjente posisjon</div></div></div><div class="data-right"><span class="num" id="count-ship">–</span></div></div>
+   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-traffic" type="checkbox" aria-label="Vis biltrafikk"><div><div class="layer-name"><span class="chip traffic"></span>Biltrafikk</div><div class="layer-note">Vegvesenet · timesverdier</div></div></div><div class="data-right"><span class="num" id="count-traffic">–</span></div></div>
+   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-build" type="checkbox" checked aria-label="Vis 3D-bygninger"><div><div class="layer-name"><span class="pict" style="width:22px;height:22px;background:#dedbd4;font-size:15px">▥</span>3D-bygninger</div><div class="layer-note">OSM · åpne bygningshøyder</div></div></div><div class="data-right"><span class="state" id="build-status">På</span></div></div>
+   <div class="layer"><div class="layer-left"><input class="switch" id="toggle-terrain" type="checkbox" aria-label="Vis 3D-terreng"><div><div class="layer-name"><span class="pict" style="width:22px;height:22px;background:#e3ebe1;font-size:15px">▲</span>3D-terreng</div><div class="layer-note">Mapterhorn · valgfritt</div></div></div><div class="data-right"><span class="state" id="terrain-status">Av</span></div></div>
+   <div class="buttons"><button id="follow" class="action primary" type="button" disabled>Følg en buss</button><button id="home" class="action" type="button">Til sentrum</button></div>
+   <div class="smallbuttons"><button id="refresh" class="link-button" type="button">↻ Oppdater kilder</button><span style="font-size:11px;color:#657681" id="refreshed">Venter på oppdatering</span></div>
+   <div class="diagnostics" aria-live="polite"><div class="statusline" id="global-status"><span class="live"></span> Initialiserer kartet …</div><div class="api-grid"><span>Entur / busser</span><span id="state-bus" class="pending">Venter</span><span>Allemannsdata / AIS</span><span id="state-ais" class="pending">Venter</span><span>Allemannsdata / trafikk</span><span id="state-traffic" class="pending">Av</span></div><p class="info">*Hurtigbåtklassifisering baseres på AIS-type/navn og kan inkludere andre passasjerbåter. Tomme lag kan skyldes manglende data eller nettlesertilgang.</p></div>
+   <details><summary>Om kartet og datakildene</summary><p>Bakgrunnskart: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> / OpenStreetMap. 3D-terreng: <a href="https://mapterhorn.com/attribution" target="_blank" rel="noopener">Mapterhorn</a>. Bygninger: OSM-høyder (ikke Kartverkets NHM-modell). Busser: <a href="https://developer.entur.no/docs/open-services/vehicle-positions" target="_blank" rel="noopener">Entur</a>. Skip og Vegvesen: <a href="https://allemannsdata.com/wiki/" target="_blank" rel="noopener">Allemannsdata</a>. AIS oppdateres omtrent hvert minutt, men den underliggende posisjonen kan være eldre. Vegvesen leverer siste tilgjengelige hele timer, ikke løpende GPS. Ingen posisjoner er simulert.</p><p>3D: høyreklikk + dra på PC eller bruk to fingre på mobilen. Klikk på busser, fartøy, tellepunkter eller bygninger for detaljer. Anbefalt: publiser filen på en vanlig HTTPS-side som GitHub Pages. En lokal Android content://-adresse kan hindre kartfliser og API-kall. Dersom kartet er tomt, bruk knappen for 2D-reservekart.</p></details>
+  </div>
+ </div>
+</aside>
+<div class="bottom-credit"><b>3D Trondheim</b> · prototyp<br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
+<script>
+window.addEventListener('DOMContentLoaded',()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const SOURCES={entur:'https://api.entur.io/realtime/v2/vehicles/graphql',ais:'https://allemannsdata.com/wiki/api/v1/kilder/ais/get_area_traffic',traffic:'https://allemannsdata.com/wiki/api/v1/kilder/vegvesen/find_traffic_points',volume:'https://allemannsdata.com/wiki/api/v1/kilder/vegvesen/get_traffic_volume'};
+const FJORD={lat:63.48,lon:10.25,radius:90};
+const AREAS={city:{center:[10.3951,63.4305],zoom:14.25,pitch:64,bearing:-20},fjord:{center:[10.18,63.525],zoom:10.55,pitch:58,bearing:-26},vanvikan:{center:[10.220,63.556],zoom:12.5,pitch:58,bearing:-25},brekstad:{center:[9.662,63.687],zoom:12.6,pitch:59,bearing:-32}};
+const geoEmpty=()=>({type:'FeatureCollection',features:[]});
+const state={ready:false,bus:[],ship:[],traffic:[],lastBus:0,lastAIS:0,lastTraffic:0,requests:{bus:0,ais:0,traffic:0},followId:null,updateBusRunning:false,mapMode:'vector',mapErrors:0,styleTimer:null,handlersRegistered:false,notified:false};
+const htmlEscape=value=>String(value??'–').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const num=v=>v===null||v===undefined||v===''?null:Number.isFinite(Number(v))?Number(v):null;
+const label=(x)=>String(x??'–');
+const clock=()=>new Date().toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const goodCoords=(a,b)=>Number.isFinite(a)&&Number.isFinite(b)&&a>=-180&&a<=180&&b>=-90&&b<=90;
+function coords(o){if(!o||typeof o!=='object')return null;const pp=o.position||o.location||o.coordinates||o.geometry||o;if(Array.isArray(pp)){const a=num(pp[0]),b=num(pp[1]);return a!==null&&b!==null&&goodCoords(a,b)?[a,b]:null;}if(pp!==o){const found=coords(pp);if(found)return found;}const lat=num(o.latitude??o.lat??o.Latitude??o.position_lat??o.y),lon=num(o.longitude??o.lon??o.lng??o.Longitude??o.position_lon??o.x);return lat!==null&&lon!==null&&goodCoords(lon,lat)?[lon,lat]:null;}
+function findRows(v){const result=[];const seen=new Set();function walk(x,depth){if(depth>8||!x||typeof x!=='object'||seen.has(x))return;seen.add(x);if(Array.isArray(x)){for(const item of x)walk(item,depth+1);return;}const xy=coords(x);if(xy && Object.keys(x).some(k=>/mmsi|name|ship|vessel|speed|sog|count|volume|point|type|last/i.test(k)))result.push(x);for(const [key,item] of Object.entries(x)){if(['_links','parameters','sources','_meta'].includes(key))continue;if(item&&typeof item==='object')walk(item,depth+1);}}walk(v?.data??v,0);return result;}
+function apiMessage(key,text,kind='pending'){$('state-'+key).textContent=text;$('state-'+key).className=kind;}
+function global(text,kind='pending'){$('global-status').innerHTML='<span class="live" style="background:'+(kind==='fail'?'#ca4747':kind==='ok'?'#20a36d':'#ce9b37')+'"></span>'+htmlEscape(text);}
+function setCounts(){for(const [key,list,on] of [['bus',state.bus,$('toggle-bus').checked],['boat',state.ship.filter(s=>s.properties.fast),$('toggle-boat').checked],['ship',state.ship.filter(s=>!s.properties.fast),$('toggle-ship').checked],['traffic',state.traffic,$('toggle-traffic').checked]])$('count-'+key).textContent=on?list.length:'–';$('follow').disabled=!state.bus.length;}
+function updateStamp(){$('refreshed').textContent='Sist sjekket '+clock();}
+function setData(source,rows){if(!state.ready)return;const s=map.getSource(source);if(s)s.setData({type:'FeatureCollection',features:rows});}
+async function getJSON(url,options={}){const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),15000);try{const res=await fetch(url,{...options,signal:ctrl.signal,cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);const data=await res.json();if(data?.errors?.length)throw new Error(data.errors[0]?.message||'GraphQL-feil');if(data?.error)throw new Error(typeof data.error==='string'?data.error:(data.error.message||'API-feil'));return data;}finally{clearTimeout(timer);}}
+// En helt uavhengig rasterkilde som reserve hvis OpenFreeMap-vektorflisene uteblir.
+const OSM_RASTER_STYLE={version:8,sources:{'osm-standard':{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,maxzoom:19,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm-raster',type:'raster',source:'osm-standard'}]};
+function notice(message){$('map-alert-text').textContent=message;$('map-alert').hidden=false;}
+function mapFallback(reason){
+ if(state.mapMode==='raster')return;
+ console.warn('Bytter til reservekart:',reason);state.mapMode='raster';state.ready=false;state.mapErrors=0;
+ clearTimeout(state.styleTimer);$('toggle-terrain').checked=false;$('terrain-status').textContent='Av';
+ $('switch-basemap').textContent='Prøv vektorkart';
+ notice('OpenFreeMap ble ikke lastet riktig. Prøver et enklere 2D-kart. '+(location.protocol==='content:'?'På mobil: publiser via HTTPS for best støtte.':''));
+ try{map.setStyle(OSM_RASTER_STYLE,{diff:false});}catch(e){global('Kartkilder blokkert: '+e.message,'fail');notice('Kartet fikk ikke tilgang til kartkilder. Publiser HTML-filen via HTTPS, for eksempel GitHub Pages.');}
+}
+function mapPrimary(){
+ if(state.mapMode==='vector')return;
+ state.mapMode='vector';state.ready=false;state.mapErrors=0;
+ $('switch-basemap').textContent='Prøv 2D-kart';
+ notice('Forsøker OpenFreeMap igjen. Hvis kartet fortsatt er tomt, prøv 2D-kart.');
+ map.setStyle('https://tiles.openfreemap.org/styles/liberty',{diff:false});
+}
+function toggleTerrain(active){
+ if(!state.ready)return;
+ try{
+   if(active){
+     if(!map.getSource('elevation'))map.addSource('elevation',{type:'raster-dem',url:'https://tiles.mapterhorn.com/tilejson.json',encoding:'terrarium',tileSize:512,attribution:'© Mapterhorn'});
+     map.setTerrain({source:'elevation',exaggeration:1});
+   }else{map.setTerrain(null);}
+   $('terrain-status').textContent=active?'På':'Av';
+ }catch(e){console.warn('Terreng deaktivert:',e);$('toggle-terrain').checked=false;$('terrain-status').textContent='Feil';notice('Terrengdata kunne ikke aktiveres. Kartet fortsetter uten 3D-terreng.');}
+}
+const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:AREAS.city.center,zoom:AREAS.city.zoom,bearing:AREAS.city.bearing,pitch:AREAS.city.pitch,maxPitch:80,canvasContextAttributes:{antialias:true},attributionControl:true});
+map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');map.addControl(new maplibregl.FullscreenControl(),'top-right');map.addControl(new maplibregl.ScaleControl({maxWidth:120,unit:'metric'}),'bottom-right');
+function setVisible(layer,on){if(state.ready&&map.getLayer(layer))map.setLayoutProperty(layer,'visibility',on?'visible':'none');}
+function point(c,p){return {type:'Feature',geometry:{type:'Point',coordinates:c},properties:p};}
+function addArt(name,fill,type){const c=document.createElement('canvas');c.width=64;c.height=64;const g=c.getContext('2d');g.translate(32,32);g.shadowColor='rgba(0,0,0,.25)';g.shadowBlur=4;g.shadowOffsetY=2;g.fillStyle=fill;g.strokeStyle='white';g.lineWidth=3;if(type==='bus'){g.beginPath();g.roundRect(-16,-25,32,50,9);g.fill();g.stroke();g.fillStyle='#252f39';g.fillRect(-11,-17,22,9);g.fillStyle='#fff4';g.fillRect(-10,4,20,4);g.fillStyle='#ffecc6';g.fillRect(-13,16,5,4);g.fillRect(8,16,5,4);}else{g.beginPath();g.moveTo(0,-26);g.bezierCurveTo(17,-15,17,13,10,24);g.lineTo(-10,24);g.bezierCurveTo(-17,13,-17,-15,0,-26);g.closePath();g.fill();g.stroke();g.shadowBlur=0;g.fillStyle='#c6edf4';g.fillRect(-9,-5,18,9);}try{map.addImage(name,g.getImageData(0,0,64,64),{pixelRatio:2});}catch(e){console.warn('Ikonfeil:',e);}}
+function registerClick(id,makeHtml){map.on('click',id,e=>{const f=e.features?.[0];if(!f)return;let at=f.geometry?.coordinates;if(!Array.isArray(at)||typeof at[0]!=='number')at=e.lngLat.toArray();new maplibregl.Popup({offset:12,maxWidth:'290px'}).setLngLat(at).setHTML(makeHtml(f.properties||{})).addTo(map);});map.on('mouseenter',id,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',id,()=>map.getCanvas().style.cursor='');}
+function popup(title,pairs){return '<div class="pop-title">'+htmlEscape(title)+'</div><div class="pop-kv">'+pairs.map(([a,b])=>'<span>'+htmlEscape(a)+'</span><span>'+htmlEscape(b)+'</span>').join('')+'</div>';}
+function initMap(){
+ // Høyde-DEM kobles bare inn når brukeren velger 3D-terreng; svikt i DEM skal ikke stoppe bakgrunnskartet.
+ if(state.mapMode==='vector'){
+  map.addSource('buildings-source',{type:'vector',url:'https://tiles.openfreemap.org/planet',attribution:'© OpenStreetMap contributors / OpenFreeMap'});
+  const before=map.getStyle().layers.find(l=>l.type==='symbol')?.id;
+  map.addLayer({id:'building-extrude',type:'fill-extrusion',source:'buildings-source','source-layer':'building',minzoom:13.2,filter:['!=',['get','hide_3d'],true],paint:{'fill-extrusion-color':'#b7b1a5','fill-extrusion-height':['interpolate',['linear'],['zoom'],13.2,0,14.7,['coalesce',['to-number',['get','render_height'],null],8]],'fill-extrusion-base':['coalesce',['to-number',['get','render_min_height'],null],0],'fill-extrusion-opacity':.85}},before);
+ }
+ $('build-status').textContent=state.mapMode==='raster'?'2D-kart':($('toggle-build').checked?'På':'Av');
+ for(const source of ['bus-data','ship-data','traffic-data'])map.addSource(source,{type:'geojson',data:geoEmpty()});
+ addArt('red-bus','#de3038','bus');addArt('blue-boat','#0b7e95','ship');addArt('slate-ship','#5c7189','ship');
+ map.addLayer({id:'traffic-bars',type:'fill-extrusion',source:'traffic-data',layout:{visibility:'none'},paint:{'fill-extrusion-color':['interpolate',['linear'],['get','count'],0,'#e3b25a',300,'#ef8640',3000,'#bb4340'],'fill-extrusion-height':['get','height'],'fill-extrusion-opacity':.92}});
+ map.addLayer({id:'other-vessels',type:'symbol',source:'ship-data',filter:['==',['get','fast'],false],layout:{'icon-image':'slate-ship','icon-size':.75,'icon-rotate':['get','course'],'icon-allow-overlap':true}});
+ map.addLayer({id:'fast-vessels',type:'symbol',source:'ship-data',filter:['==',['get','fast'],true],layout:{'icon-image':'blue-boat','icon-size':.94,'icon-rotate':['get','course'],'icon-allow-overlap':true}});
+ map.addLayer({id:'bus-vehicles',type:'symbol',source:'bus-data',layout:{'icon-image':'red-bus','icon-size':['interpolate',['linear'],['zoom'],9,.52,14,.8,17,1.05],'icon-rotate':['get','bearing'],'icon-allow-overlap':true}});
+ if(state.mapMode==='vector')map.addLayer({id:'bus-line-numbers',type:'symbol',source:'bus-data',minzoom:12.7,layout:{'text-field':['get','line'],'text-size':11,'text-offset':[0,2.1],'text-font':['Open Sans Bold','Arial Unicode MS Bold'],'text-allow-overlap':true},paint:{'text-color':'#7b1820','text-halo-color':'#fff','text-halo-width':1.4}});
+ if(!state.handlersRegistered){
+ registerClick('bus-vehicles',p=>popup('🚌 Buss '+label(p.line),[['Rute',p.route],['Kjøretøy',p.vehicleId],['GPS oppdatert',p.updated]]));
+ for(const id of ['fast-vessels','other-vessels'])registerClick(id,p=>popup((p.fast?'🚤':'🚢')+' '+label(p.name),[['AIS-type',p.type||'Ukjent'],['MMSI',p.mmsi||'Ikke oppgitt'],['Fart',p.speed===null?'Ukjent':p.speed+' knop'],['Posisjonstid',p.updated||'Ikke oppgitt']]));
+ registerClick('traffic-bars',p=>popup('🚗 '+label(p.name),[['Tellepunkt',p.id],['Siste målte time',p.hour],['Kjøretøy',p.count>=0?p.count:'Manglende tall'],['Visualisering','Søylehøyde illustrativ']]));
+ state.handlersRegistered=true;
+ }
+ state.ready=true;
+ if($('toggle-terrain').checked)toggleTerrain(true);
+ if(!$('toggle-build').checked)setVisible('building-extrude',false);
+ clearTimeout(state.styleTimer);
+ if(state.mapMode==='vector'){
+   state.styleTimer=setTimeout(()=>{if(state.mapMode==='vector' && !map.loaded())mapFallback('Manglende fullstendig kartinnlasting');},15000);
+ }setVisible('other-vessels',$('toggle-ship').checked);setVisible('fast-vessels',$('toggle-boat').checked);global('Kartstil lastet · henter kartfliser og sanntidsdata','pending');refreshAll(true);
+}
+async function updateBuses(){if(!state.ready||!$('toggle-bus').checked){state.bus=[];setData('bus-data',[]);setCounts();apiMessage('bus','Av','pending');return;}const seq=++state.requests.bus;apiMessage('bus','Henter …','pending');try{
+ // query confirmed against published Entur schema; only data younger than 5 minutes.
+ const b=map.getBounds(),delta=0.008;const bounds={minLat:Math.max(62.9,b.getSouth()-delta),maxLat:Math.min(64.1,b.getNorth()+delta),minLon:Math.max(8.9,b.getWest()-delta),maxLon:Math.min(11.8,b.getEast()+delta)};
+ if(bounds.maxLat<=bounds.minLat||bounds.maxLon<=bounds.minLon){state.bus=[];setData('bus-data',[]);setCounts();return;}
+ const query=`{ vehicles(codespaceId: "ATB", boundingBox: {minLat: ${bounds.minLat.toFixed(5)}, maxLat: ${bounds.maxLat.toFixed(5)}, minLon: ${bounds.minLon.toFixed(5)}, maxLon: ${bounds.maxLon.toFixed(5)}}, maxDataAge: "PT5M") {vehicleId lastUpdated bearing line {publicCode lineName} location {latitude longitude}} }`;
+ const json=await getJSON(SOURCES.entur,{method:'POST',headers:{'Content-Type':'application/json','ET-Client-Name':'trondheim-sanntidskart-demo'},body:JSON.stringify({query})});if(seq!==state.requests.bus)return;
+ const dedup=new Map();for(const v of json?.data?.vehicles||[]){const c=coords(v.location);if(!c)continue;const line=String(v.line?.publicCode||'').trim();if(['800','805','810'].includes(line))continue;const key=v.vehicleId||JSON.stringify(c);dedup.set(key,point(c,{vehicleId:v.vehicleId||'–',line:line||'Buss',route:v.line?.lineName||'Ikke oppgitt',bearing:num(v.bearing)??0,updated:v.lastUpdated||'Ukjent'}));}
+ state.bus=[...dedup.values()];setData('bus-data',state.bus);setCounts();apiMessage('bus',clock()+' · aktiv','ok');state.lastBus=Date.now();updateStamp();if(state.followId)focusFollow();
+ }catch(e){if(seq!==state.requests.bus)return;apiMessage('bus','Feil · '+e.message,'fail');$('count-bus').textContent='!';console.warn('Entur:',e);global('Én eller flere datakilder svarer ikke','fail');}}
+function guessFastShip(o){const type=String(o.ship_type??o.shipType??o.vessel_type??o.vesselType??o.type??o.ship_type_code??'');const name=String(o.name??o.vessel_name??o.ship_name??o.shipName??'');const val=Number(type);const known=/(hurtig|express|high.speed|passenger|passasjer|fosen|trondheimsfjord|terningen|fjordprins|fjordfart|fjordkatt|visten|sjøbuss)/i.test(type+' '+name);const classified=Number.isInteger(val)&&((val>=40&&val<=49)||(val>=60&&val<=69));return known||classified;}
+async function updateAIS(){if(!state.ready||(!$('toggle-boat').checked&&!$('toggle-ship').checked)){state.ship=[];setData('ship-data',[]);setCounts();apiMessage('ais','Av','pending');return;}
+ const seq=++state.requests.ais;apiMessage('ais','Henter …','pending');try{const url=new URL(SOURCES.ais);url.searchParams.set('lat',FJORD.lat);url.searchParams.set('lon',FJORD.lon);url.searchParams.set('radius_km',FJORD.radius);url.searchParams.set('limit','100');const json=await getJSON(url);if(seq!==state.requests.ais)return;
+ const rows=findRows(json),seen=new Set(),features=[];for(const a of rows){const c=coords(a);if(!c||c[0]<8.8||c[0]>11.8||c[1]<63.15||c[1]>64.05)continue;const mmsi=a.mmsi??a.MMSI??a.vessel_id??a.vesselId??'';const name=a.name??a.ship_name??a.vessel_name??a.shipName??a.vessel?.name??'Ukjent fartøy';const k=mmsi||String(name)+' '+c.join(',');if(seen.has(k))continue;seen.add(k);const speed=num(a.speed??a.sog??a.speed_knots??a.speedOverGround);const type=a.ship_type??a.shipType??a.vessel_type??a.type??'';const updated=a.timestamp??a.updated_at??a.last_updated??a.lastUpdated??a.position_timestamp??a.time??'';features.push(point(c,{fast:guessFastShip(a),mmsi:String(mmsi),name:String(name),type:String(type),speed:speed===null?null:Math.round(speed*10)/10,course:num(a.course??a.cog??a.heading)??0,updated:String(updated)}));}
+ state.ship=features;setData('ship-data',features);setCounts();apiMessage('ais',clock()+' · aktiv','ok');state.lastAIS=Date.now();updateStamp();
+ }catch(e){if(seq!==state.requests.ais)return;apiMessage('ais','Feil · '+e.message,'fail');$('count-boat').textContent=$('toggle-boat').checked?'!':'–';$('count-ship').textContent=$('toggle-ship').checked?'!':'–';console.warn('AIS:',e);global('AIS-kilden kunne ikke hentes','fail');}}
+function trafficId(o){return o.point_id??o.traffic_registration_point_id??o.registration_point_id??o.id??o.identifier??'';}
+function volume(payload){const rows=findRows(payload);for(const r of rows){for(const k of ['volume','traffic_volume','vehicle_count','count','vehicles','trafficVolume','total_count']){const v=num(r[k]);if(v!==null&&v>=0)return {value:v,time:String(r.hour??r.from??r.timestamp??r.time??'Siste tilgjengelige time')};}}return null;}
+function pillar(c,meters){const [x,y]=c,dy=meters/111320,dx=meters/(111320*Math.cos(y*Math.PI/180));return {type:'Polygon',coordinates:[[[x-dx,y-dy],[x+dx,y-dy],[x+dx,y+dy],[x-dx,y+dy],[x-dx,y-dy]]]};}
+async function updateTraffic(){if(!state.ready||!$('toggle-traffic').checked){state.traffic=[];setData('traffic-data',[]);setCounts();apiMessage('traffic','Av','pending');return;}const seq=++state.requests.traffic;apiMessage('traffic','Henter …','pending');try{const c=map.getCenter(),u=new URL(SOURCES.traffic);u.searchParams.set('lat',c.lat);u.searchParams.set('lon',c.lng);u.searchParams.set('radius_km','22');u.searchParams.set('limit','25');const json=await getJSON(u);if(seq!==state.requests.traffic)return;const rows=findRows(json).map(o=>({coords:coords(o),id:String(trafficId(o)),name:o.name??o.point_name??'Trafikktellepunkt'})).filter(p=>p.coords&&p.id).slice(0,10);
+ const enriched=await Promise.all(rows.map(async row=>{try{const u=new URL(SOURCES.volume);u.searchParams.set('point_id',row.id);u.searchParams.set('hours','3');u.searchParams.set('limit','3');const v=volume(await getJSON(u));return {...row,v};}catch{return {...row,v:null};}}));if(seq!==state.requests.traffic)return;
+ state.traffic=enriched.map(p=>({type:'Feature',geometry:pillar(p.coords,13),properties:{name:p.name,id:p.id,count:p.v?.value??-1,hour:p.v?.time??'Ukjent',height:p.v?Math.max(15,Math.min(160,15+p.v.value/15)):15}}));setData('traffic-data',state.traffic);setCounts();apiMessage('traffic',clock()+' · aktiv','ok');state.lastTraffic=Date.now();updateStamp();
+ }catch(e){if(seq!==state.requests.traffic)return;apiMessage('traffic','Feil · '+e.message,'fail');$('count-traffic').textContent='!';console.warn('Trafikk:',e);global('Vegvesen-kilden kunne ikke hentes','fail');}}
+function refreshAll(force=false){if(!state.ready)return;const now=Date.now();if(force||now-state.lastBus>14000)updateBuses();if(force||now-state.lastAIS>50000)updateAIS();if($('toggle-traffic').checked&&(force||now-state.lastTraffic>270000))updateTraffic();}
+let moveDebounce;
+map.on('style.load',()=>{try{initMap();}catch(e){global('Kartfeil: '+e.message,'fail');notice('En kartkomponent feilet: '+e.message+'. Prøv 2D-kart.');console.error(e);}});
+map.on('idle',()=>{if(state.ready){if(state.mapMode==='vector')clearTimeout(state.styleTimer);if(!state.mapErrors)global('Kartgrunnlag lastet · sanntidsdata kontrolleres','ok');}});
+map.on('error',e=>{
+ const msg=String(e.error?.message||e.error||e);console.warn('Kart/tile-kilde:',msg);
+ if(/mapterhorn|elevation|raster.dem/i.test(msg) && $('toggle-terrain').checked){
+   $('toggle-terrain').checked=false;
+   try{map.setTerrain(null);}catch(_){}
+   $('terrain-status').textContent='Feil';notice('Høydedata sviktet. Terreng er slått av slik at kartet skal fortsette å fungere.');
+   return;
+ }
+ if(state.mapMode==='vector' && /fetch|tile|source|network|404|403|failed|openfreemap|cors/i.test(msg)){
+   state.mapErrors++;
+   if(state.mapErrors>=4)mapFallback('Kartserveren ga '+state.mapErrors+' feil');
+ }
+ if(state.mapMode==='raster' && /fetch|tile|source|network|404|403|failed|cors/i.test(msg)){
+   notice('Også reservekartet får nettverksfeil. Publiser filen via HTTPS (for eksempel GitHub Pages), ikke content://downloads.');
+ }
+});
+$('switch-basemap').addEventListener('click',()=>state.mapMode==='vector'?mapFallback('Byttet manuelt'):mapPrimary());
+$('dismiss-alert').addEventListener('click',()=>{$('map-alert').hidden=true;});
+if(location.protocol==='content:' || location.protocol==='file:')notice('Dette er en lokal fil på telefonen. Kartkilder kan blokkeres. Prøv 2D-kart, eller publiser filen via GitHub Pages.');
+map.on('moveend',()=>{const c=map.getCenter();$('coordinates').textContent=c.lat.toFixed(4)+'° N / '+c.lng.toFixed(4)+'° Ø';if(state.ready){clearTimeout(moveDebounce);moveDebounce=setTimeout(()=>refreshAll(),650);}});
+for(const b of document.querySelectorAll('[data-area]'))b.addEventListener('click',()=>{document.querySelectorAll('[data-area]').forEach(n=>n.classList.toggle('active',n===b));state.followId=null;const p=AREAS[b.dataset.area];map.flyTo({...p,speed:1.5,essential:true});});
+$('home').addEventListener('click',()=>document.querySelector('[data-area="city"]').click());$('refresh').addEventListener('click',()=>refreshAll(true));
+$('collapse').addEventListener('click',()=>{const closed=$('panel').classList.toggle('collapsed');$('collapse').setAttribute('aria-expanded',String(!closed));$('collapse').setAttribute('aria-label',closed?'Vis kartmenyen':'Skjul kartmenyen');});
+$('toggle-bus').addEventListener('change',e=>{setVisible('bus-vehicles',e.target.checked);setVisible('bus-line-numbers',e.target.checked);if(e.target.checked)updateBuses();else{state.requests.bus++;state.bus=[];setData('bus-data',[]);setCounts();apiMessage('bus','Av','pending');}});
+function changeAIS(){setVisible('fast-vessels',$('toggle-boat').checked);setVisible('other-vessels',$('toggle-ship').checked);if(!state.lastAIS||(!state.ship.length&&($('toggle-boat').checked||$('toggle-ship').checked)))updateAIS();else{setCounts();if(!$('toggle-boat').checked&&!$('toggle-ship').checked)apiMessage('ais','Av','pending');}}
+$('toggle-boat').addEventListener('change',changeAIS);$('toggle-ship').addEventListener('change',changeAIS);
+$('toggle-traffic').addEventListener('change',e=>{setVisible('traffic-bars',e.target.checked);updateTraffic();});
+$('toggle-build').addEventListener('change',e=>{setVisible('building-extrude',e.target.checked);$('build-status').textContent=e.target.checked?'På':'Av';});
+$('toggle-terrain').addEventListener('change',e=>toggleTerrain(e.target.checked));
+$('follow').addEventListener('click',()=>{if(!state.bus.length)return;const current=state.bus.findIndex(b=>b.properties.vehicleId===state.followId),next=state.bus[(current+1)%state.bus.length];state.followId=next.properties.vehicleId;focusFollow();$('follow').textContent='Neste buss →';});
+function focusFollow(){const f=state.bus.find(b=>b.properties.vehicleId===state.followId);if(f)map.easeTo({center:f.geometry.coordinates,zoom:Math.max(map.getZoom(),15.3),pitch:65,duration:750,essential:true});}
+setInterval(()=>{if(!document.hidden&&state.ready)refreshAll();},20000);
+window.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshAll();});
+});
+</script>
+</body>
+</html>
