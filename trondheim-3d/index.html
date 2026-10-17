@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
-<meta name="app-version" content="2.12">
+<meta name="app-version" content="2.13">
 <meta name="description" content="Trondheim i 3D med levende AtB-busser, klikkbare holdeplasser og sanntidsavgangstavler fra Entur.">
-<title>Trondheim · 3D og sanntidskart · v2.12</title>
+<title>Trondheim · 3D og sanntidskart · v2.13</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -187,7 +187,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar collapsed" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.12</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.12">v2.12</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.13</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.13">v2.13</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · animert langs veg · GPS ca. kvart 10. sekund<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><span id="bus3d-status" class="state" role="status">Laster detaljerte 3D-busser …</span><input id="toggle-road" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"><input id="toggle-bus3d" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
@@ -258,7 +258,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
     </details>
   </div>
 </aside>
-<div class="bottom-credit"><b>3D Trondheim · v2.12</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
+<div class="bottom-credit"><b>3D Trondheim · v2.13</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
@@ -723,13 +723,11 @@ function busAnimationFrame(now){
 // 3D BUS MODEL (v2.4). Shared procedural mesh, no external asset URLs or model licences.
 // Visual LOD only: real-world sized 3D buses at close zoom; smaller, proportional
 // vector-sprite buses at neighbourhood/city zoom. No GPS/route/AIS logic changed.
-// v2.12: Consistent bus proportions at every zoom.
-// The previous camera-facing pictogram had a broad, billboard-like body which
-// dominated the pitched 3D map. Keep the real-world 3D model at close zoom,
-// but draw a narrow, roof-first 12 m bus sprite at distance. It follows the
-// road plane so it never appears like a vertical block in front of buildings.
-// This is visual LOD only; live GPS, road interpolation and route logic stay intact.
-const BUS_MESH_MIN_ZOOM=18.55;
+// v2.13: Use the SAME detailed three-dimensional mesh much farther out.
+// The slim road-aligned bus illustration remains a fallback for far overviews
+// and devices on which the 3D renderer cannot run. Keep natural proportions:
+// no giant screen-facing billboards. Only visual LOD has been changed.
+const BUS_MESH_MIN_ZOOM=15.95;
 const BUS_ICON_ZOOM_SCALE=['interpolate',['linear'],['zoom'],
   9,0.28, 11,0.39, 12.5,0.52, 14,0.68,
   15,0.78, 16,0.86, 17,0.95, 18,1.02, 18.8,1.08, 20,1.08];
@@ -826,8 +824,10 @@ function buildThreeLayer(THREE){
      mesh.position.set((mc.x-this.anchor.x)/this.scale,-(mc.y-this.anchor.y)/this.scale,0);
      mesh.rotation.z=-(Number(f.properties.bearing)||0)*Math.PI/180;
      const z=map.getZoom();
-     // Near street zoom: 12 m bus stays physically sized (no distance enlargement).
-     const physicalScale=Math.max(1,1.16-Math.max(0,z-16)*0.16);
+     // Detail-preserving far LOD: a modest scale boost at neighbourhood zoom.
+     // The complete 12 m / 2.55 m mesh is always scaled uniformly, so its
+     // shape remains slender. The scale returns to the true size by zoom 18.
+     const physicalScale=z<=16?1.50:z>=18?1:1.50-(z-16)*0.25;
      mesh.scale.setScalar(physicalScale);
      if($('toggle-terrain').checked&&map.queryTerrainElevation){const elev=map.queryTerrainElevation(c,{exaggerated:true});if(Number.isFinite(elev))mesh.position.z=elev+0.35;}
    }
@@ -846,7 +846,7 @@ function configureBus2D(){
  // Never fade away the illustration unless actual 3D instances are ready.
  const models=bus3dLayer?.instances?.size||0;
  map.setPaintProperty('bus-vehicles','icon-opacity',(detail&&models)
-   ? ['interpolate',['linear'],['zoom'],18.55,1,18.78,0.82,19.0,0.22,19.20,0]
+   ? ['interpolate',['linear'],['zoom'],15.95,1,16.25,0.90,16.70,0.50,17.20,0.08,17.38,0]
    : 1);
  const status=threeError?'3D-modell feilet · detaljert bussikon brukes':detail?(models?'3D aktiv · '+models+' modeller':'3D klar · zoom inn for modeller'):'Detaljert bussikon';
  bus3dMessage(status);
@@ -957,7 +957,7 @@ function initMap(){
  map.addLayer({id:'stopplace-halo',type:'circle',source:'stopplace-data',minzoom:13.65,paint:{'circle-radius':['interpolate',['linear'],['zoom'],13.65,8,16,11],'circle-color':'#ffffff','circle-stroke-color':'#aedbe9','circle-stroke-width':1.4,'circle-opacity':0.02}});
  map.addLayer({id:'stopplace-markers',type:'circle',source:'stopplace-data',minzoom:13.65,paint:{'circle-radius':['interpolate',['linear'],['zoom'],13.65,4.6,16,6.5],'circle-color':'#1686b6','circle-stroke-color':'#ffffff','circle-stroke-width':1.4,'circle-opacity':0.02}});
  map.addLayer({id:'bus-select-hit',type:'circle',source:'bus-data',paint:{'circle-color':'#fff','circle-opacity':.004,'circle-radius':['interpolate',['linear'],['zoom'],10,10,16,22]}});
- // v2.12: Slender bus silhouette lies in the road plane, rather than floating as a large upright billboard.
+ // v2.13: Slender bus silhouette lies in the road plane, rather than floating as a large upright billboard.
  // The close-zoom Three.js model remains physically sized in metres.
  map.addLayer({id:'bus-vehicles',type:'symbol',source:'bus-data',layout:{'icon-image':'red-bus','icon-size':BUS_ICON_ZOOM_SCALE,'icon-rotate':['get','bearing'],'icon-pitch-alignment':'map','icon-rotation-alignment':'map','icon-allow-overlap':true}});
  // Rutenummer vises med separate HTML-merkelapper over busssymbolene (uavhengig av kartstilens fonter).
