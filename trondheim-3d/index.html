@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
 <meta name="description" content="Trondheim i 3D – levende bussposisjoner, AIS-fartøy og trafikktellepunkter fra åpne datakilder.">
-<title>Trondheim · 3D og sanntidskart · v1.2</title>
+<title>Trondheim · 3D og sanntidskart · v1.3</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -25,13 +25,14 @@ details{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}summar
 @media(max-width:370px){.sidebar{width:calc(100vw - 73px)}.pict{display:none}.chip{display:none}}
 .map-alert{position:absolute;left:12px;bottom:110px;right:12px;z-index:15;max-width:540px;background:#fffdf5;border:1px solid #efd5a8;padding:11px 10px 11px 13px;border-radius:14px;box-shadow:0 8px 28px #0002;font-size:12px;line-height:1.35;display:flex;align-items:center;gap:9px;color:#573b1b}.map-alert[hidden]{display:none}.map-alert span{flex:1}.map-alert button{border:0;background:#243f4e;color:#fff;border-radius:9px;padding:8px 10px;font-weight:750;font-size:11px;flex-shrink:0}.map-alert button.dismiss{background:transparent;color:#6a6f72;padding:3px 5px;font-size:20px}@media(min-width:640px){.map-alert{bottom:95px;left:16px}}
 
-/* Linjenummer som skjermvendte merkelapper over de faktiske Entur-bussene.
-   HTML-markorer brukes i stedet for kartstil-glyphs; fungerer ogsa pa 2D-reservekartet. */
-.bus-route-badge{position:relative;display:flex;align-items:center;justify-content:center;min-width:30px;min-height:25px;padding:3px 7px;border:2px solid #c72735;border-radius:8px;background:#fff;color:#9e1624;font:850 13px/1.15 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;white-space:nowrap;box-shadow:0 3px 9px rgba(30,32,36,.32);font-variant-numeric:tabular-nums;cursor:pointer;user-select:none;touch-action:manipulation}
-.bus-route-badge:after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid #c72735}
-.bus-route-badge:focus-visible{outline:3px solid #ffcc62;outline-offset:3px}
-.bus-route-badge.compact{font-size:11px;min-width:25px;min-height:22px;padding:2px 5px;border-radius:7px}
-@media(max-width:640px){.bus-route-badge{font-size:12px;min-width:27px;min-height:24px;padding:3px 6px}}
+/* V1.3: Markorene MAA vaere absolute. En tidligere position:relative
+   overstyrte MapLibres .maplibregl-marker og fikk boblene til a drive
+   i vanlig dokumentflyt, bort fra GPS-koordinatet. */
+.bus-route-badge{position:absolute;display:flex;align-items:center;justify-content:center;min-width:22px;min-height:18px;padding:2px 4px;border:1.5px solid #c72735;border-radius:6px;background:#fff;color:#9e1624;font:800 10px/1.05 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;white-space:nowrap;box-shadow:0 2px 5px rgba(30,32,36,.28);font-variant-numeric:tabular-nums;cursor:pointer;user-select:none;touch-action:manipulation;z-index:1}
+.bus-route-badge:after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:4px solid #c72735}
+.bus-route-badge:focus-visible{outline:2px solid #ffcc62;outline-offset:2px}
+.bus-route-badge.compact{font-size:9px;min-width:19px;min-height:16px;padding:1px 3px;border-radius:5px}
+@media(max-width:640px){.bus-route-badge{font-size:10px;min-width:22px;min-height:18px;padding:2px 4px}}
 </style>
 </head>
 <body>
@@ -39,7 +40,7 @@ details{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}summar
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v1.2</div><h1 class="headtitle">Trondheim</h1><p class="tagline">Busser, hurtigbåter og trafikk i sanntid</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v1.3</div><h1 class="headtitle">Trondheim</h1><p class="tagline">Busser, hurtigbåter og trafikk i sanntid</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · linjenummer over bussene · ca. 20 sek</div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
@@ -130,7 +131,7 @@ function syncBusRouteLabels(){
      const el=document.createElement('button');
      el.type='button';el.className='bus-route-badge';
      el.setAttribute('aria-label','Se informasjon om buss '+route);
-     marker=new maplibregl.Marker({element:el,anchor:'bottom',offset:[0,-20]})
+     marker=new maplibregl.Marker({element:el,anchor:'bottom',offset:[0,-14]})
        .setLngLat(c)
        .setPopup(new maplibregl.Popup({offset:24,maxWidth:'290px'}).setHTML(routePopupHtml(p)))
        .addTo(map);
