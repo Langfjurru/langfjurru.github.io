@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
-<meta name="app-version" content="2.8">
+<meta name="app-version" content="2.9">
 <meta name="description" content="Trondheim i 3D med levende AtB-busser, klikkbare holdeplasser og sanntidsavgangstavler fra Entur.">
-<title>Trondheim · 3D og sanntidskart · v2.8</title>
+<title>Trondheim · 3D og sanntidskart · v2.9</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -21,7 +21,7 @@
 .diagnostics{margin-top:10px;padding:12px 13px;border-radius:12px;background:#f3f6f6;font-size:12px;color:#50616a;line-height:1.55}.diagnostics p{margin:0}.diagnostics strong{font-weight:800}.diagnostics .info{margin-top:7px}.diagnostics a{color:#0c7484}.statusline{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px;font-weight:790;letter-spacing:.2px}.api-grid{display:grid;grid-template-columns:1fr auto;gap:5px 12px;font-size:11px;margin-top:9px}.api-grid span:nth-child(even){font-variant-numeric:tabular-nums;text-align:right}.ok{color:#218657}.fail{color:#bd4545}.pending{color:#986c24}
 details{border-top:1px solid var(--line);margin-top:16px;padding-top:13px}summary{cursor:pointer;font-weight:750;color:#35434d;font-size:13px}details p{font-size:12px;color:#5c6973;line-height:1.6}details a{color:#087a88}.bottom-credit{position:absolute;bottom:30px;left:16px;z-index:5;background:#ffffffed;padding:9px 12px;border-radius:10px;color:#415158;box-shadow:0 2px 10px #0002;font-size:11px}.bottom-credit small{font-size:10px;color:#65747e}
 .maplibregl-popup-content{font:inherit;padding:16px;border-radius:13px;min-width:190px;box-shadow:0 8px 35px #0003}.maplibregl-popup-close-button{font-size:20px}.pop-title{font-size:16px;font-weight:850;margin-right:18px;margin-bottom:8px}.pop-kv{font-size:12px;display:grid;grid-template-columns:auto 1fr;gap:5px 13px;line-height:1.5}.pop-kv>span:nth-child(odd){color:#6c7b82}.pop-kv>span:nth-child(even){text-align:right;font-weight:650;color:#27363d;word-break:break-word}
-.sidebar.collapsed{width:260px;max-height:none;overflow:hidden}.sidebar.collapsed .pane{padding:15px 17px}.sidebar.collapsed .brand,.sidebar.collapsed .tagline,.sidebar.collapsed .pane-body{display:none}.sidebar.collapsed .headtitle{font-size:20px;line-height:1.7}.sidebar.collapsed .minimise{transform:rotate(180deg)}
+.sidebar.collapsed{width:260px;max-height:none;overflow:hidden}.sidebar.collapsed .pane{padding:15px 17px}.sidebar.collapsed .brand,.sidebar.collapsed .tagline,.sidebar.collapsed .pane-body{display:none}.sidebar.collapsed .headtitle{font-size:20px;line-height:1.7}.sidebar.collapsed .minimise{transform:none}.sidebar:not(.collapsed) .minimise{transform:rotate(180deg)}
 @media(max-width:640px){.sidebar{left:10px;top:10px;width:calc(100vw - 84px);max-width:385px;max-height:calc(100dvh - 96px);border-radius:19px}.pane{padding:17px 16px}.headtitle{font-size:24px}.tagline{font-size:12px;margin:6px 0 0}.brand{font-size:9px;margin-bottom:6px}.pane-body{margin-top:12px}.layer{padding:9px 0;gap:7px}.layer-left{gap:7px}.pict{width:29px;height:30px;font-size:17px}.layer-name{font-size:13px;gap:5px}.layer-note{font-size:10px;margin-top:2px}.num{font-size:14px}.data-right{gap:7px}.switch{width:19px;height:19px}.switch:checked:after{font-size:15px;line-height:13px}.area-bar button{font-size:10px;padding:8px 2px}.buttons{margin-top:12px}.action{padding:10px 5px;font-size:11px}.diagnostics{font-size:11px}.maplibregl-ctrl-top-right{top:10px;right:10px}.bottom-credit{left:10px;bottom:34px;max-width:210px;padding:8px 10px}.sidebar.collapsed{width:218px}.sidebar.collapsed .headtitle{font-size:18px}}
 @media(max-width:370px){.sidebar{width:calc(100vw - 73px)}.pict{display:none}.chip{display:none}}
 .map-alert{position:absolute;left:12px;bottom:110px;right:12px;z-index:15;max-width:540px;background:#fffdf5;border:1px solid #efd5a8;padding:11px 10px 11px 13px;border-radius:14px;box-shadow:0 8px 28px #0002;font-size:12px;line-height:1.35;display:flex;align-items:center;gap:9px;color:#573b1b}.map-alert[hidden]{display:none}.map-alert span{flex:1}.map-alert button{border:0;background:#243f4e;color:#fff;border-radius:9px;padding:8px 10px;font-weight:750;font-size:11px;flex-shrink:0}.map-alert button.dismiss{background:transparent;color:#6a6f72;padding:3px 5px;font-size:20px}@media(min-width:640px){.map-alert{bottom:95px;left:16px}}
@@ -185,9 +185,9 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
 <body>
 <div id="map" role="application" aria-label="Interaktivt 3D-kart over Trondheim og Trondheimsfjorden"></div>
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
-<aside class="sidebar" id="panel" aria-label="Kartlag og sanntidsdata">
+<aside class="sidebar collapsed" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.8</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.8">v2.8</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Skjul kartmenyen" aria-expanded="true">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.9</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.9">v2.9</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <div class="layer"><div class="layer-left"><input class="switch" id="toggle-bus" type="checkbox" checked aria-label="Vis busser"><div><div class="layer-name"><span class="chip bus"></span>Busser</div><div class="layer-note">Entur / AtB · animert langs veg · GPS ca. kvart 10. sekund<br><span id="road-match-status">Vegtilpasning: venter på vegdata</span><br><span id="bus3d-status" class="state" role="status">Laster detaljerte 3D-busser …</span><input id="toggle-road" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"><input id="toggle-bus3d" type="checkbox" checked hidden tabindex="-1" aria-hidden="true"></div></div></div><div class="data-right"><span class="num" id="count-bus">–</span></div></div>
@@ -258,7 +258,7 @@ body.weather-open .weather-fab{right:calc(min(490px,38vw) + 14px)}
     </details>
   </div>
 </aside>
-<div class="bottom-credit"><b>3D Trondheim · v2.8</b><br><small id="coordinates">63.4305° N / 10.3951° Ø</small></div>
+<div class="bottom-credit"><b>3D Trondheim · v2.9</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
@@ -275,7 +275,7 @@ const AIS_ZONES=[
 const AIS_REFRESH_MS=300000; // Allemannsdata oppgir 300s cache / ikke sekunds-sanntid.
 // Beholder dokumentert v1.4-animasjon; v1.5 legger til valgfri vegbasert sti per GPS-endring.
 const BUS_POLL_MS=10000, BUS_BLEND_MS=10300, BUS_DRAW_MS=100;
-const AREAS={city:{center:[10.3951,63.4305],zoom:14.25,pitch:64,bearing:-20},fjord:{center:[10.18,63.525],zoom:10.55,pitch:58,bearing:-26},vanvikan:{center:[10.220,63.556],zoom:12.5,pitch:58,bearing:-25},brekstad:{center:[9.662,63.687],zoom:12.6,pitch:59,bearing:-32}};
+const AREAS={city:{center:[10.3980,63.4299],zoom:14.65,pitch:55,bearing:-18},fjord:{center:[10.18,63.525],zoom:10.55,pitch:58,bearing:-26},vanvikan:{center:[10.220,63.556],zoom:12.5,pitch:58,bearing:-25},brekstad:{center:[9.662,63.687],zoom:12.6,pitch:59,bearing:-32}};
 const geoEmpty=()=>({type:'FeatureCollection',features:[]});
 const state={ready:false,bus:[],ship:[],traffic:[],lastBus:0,lastAIS:0,lastTraffic:0,requests:{bus:0,ais:0,traffic:0},followId:null,updateBusRunning:false,mapMode:'vector',mapErrors:0,styleTimer:null,handlersRegistered:false,notified:false};
 const htmlEscape=value=>String(value??'–').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -723,9 +723,10 @@ function busAnimationFrame(now){
 // 3D BUS MODEL (v2.4). Shared procedural mesh, no external asset URLs or model licences.
 // Visual LOD only: real-world sized 3D buses at close zoom; smaller, proportional
 // vector-sprite buses at neighbourhood/city zoom. No GPS/route/AIS logic changed.
-const BUS_MESH_MIN_ZOOM=16.0;
+// v2.9: keep slender illustrated vehicles at middle zoom; full 3D mesh appears only near street level.
+const BUS_MESH_MIN_ZOOM=17.55;
 const BUS_ICON_ZOOM_SCALE=['interpolate',['linear'],['zoom'],
-  9,0.12, 11,0.15, 12.5,0.18, 14,0.24, 15,0.28, 16,0.32, 17,0.36, 19,0.40];
+  9,0.10, 11,0.13, 12.5,0.16, 14,0.20, 15,0.24, 16,0.28, 17,0.32, 18,0.38, 19,0.42];
 // Only Three.js is loaded on demand; MapLibre + all v1.5 vehicle functionality
 // remains operational if that CDN is unavailable, or if 3D fails on a phone.
 let ThreeLib=null,threeLoading=null,bus3dLayer=null,threeError=false;
@@ -819,7 +820,7 @@ function buildThreeLayer(THREE){
      mesh.position.set((mc.x-this.anchor.x)/this.scale,-(mc.y-this.anchor.y)/this.scale,0);
      mesh.rotation.z=-(Number(f.properties.bearing)||0)*Math.PI/180;
      const z=map.getZoom();
-     // 12 m bus remains approximately 12-14 m rather than 2.4 x oversized.
+     // Near street zoom: 12 m bus stays physically sized (no distance enlargement).
      const physicalScale=Math.max(1,1.16-Math.max(0,z-16)*0.16);
      mesh.scale.setScalar(physicalScale);
      if($('toggle-terrain').checked&&map.queryTerrainElevation){const elev=map.queryTerrainElevation(c,{exaggerated:true});if(Number.isFinite(elev))mesh.position.z=elev+0.35;}
@@ -838,7 +839,7 @@ function configureBus2D(){
  // Keep a visible, recognisable fallback until actual meshes are large enough.
  const models=bus3dLayer?.instances?.size||0;
  map.setPaintProperty('bus-vehicles','icon-opacity',(detail&&models)
-   ? ['interpolate',['linear'],['zoom'],16.0,1,16.42,0.06,16.8,0]
+   ? ['interpolate',['linear'],['zoom'],17.55,1,17.72,0.18,17.85,0]
    : 1);
  const status=threeError?'3D-modell feilet · detaljert bussikon brukes':detail?(models?'3D aktiv · '+models+' modeller':'3D klar · zoom inn for modeller'):'Detaljert bussikon';
  bus3dMessage(status);
@@ -896,7 +897,7 @@ function addDetailedBusSprite(){
 function addArt(name,fill,type){const c=document.createElement('canvas');c.width=64;c.height=64;const g=c.getContext('2d');g.translate(32,32);g.shadowColor='rgba(0,0,0,.25)';g.shadowBlur=4;g.shadowOffsetY=2;g.fillStyle=fill;g.strokeStyle='white';g.lineWidth=3;if(type==='bus'){g.beginPath();g.roundRect(-16,-25,32,50,9);g.fill();g.stroke();g.fillStyle='#252f39';g.fillRect(-11,-17,22,9);g.fillStyle='#fff4';g.fillRect(-10,4,20,4);g.fillStyle='#ffecc6';g.fillRect(-13,16,5,4);g.fillRect(8,16,5,4);}else{g.beginPath();g.moveTo(0,-26);g.bezierCurveTo(17,-15,17,13,10,24);g.lineTo(-10,24);g.bezierCurveTo(-17,13,-17,-15,0,-26);g.closePath();g.fill();g.stroke();g.shadowBlur=0;g.fillStyle='#c6edf4';g.fillRect(-9,-5,18,9);}try{map.addImage(name,g.getImageData(0,0,64,64),{pixelRatio:2});}catch(e){console.warn('Ikonfeil:',e);}}
 function registerClick(id,makeHtml){map.on('click',id,e=>{const f=e.features?.[0];if(!f)return;let at=f.geometry?.coordinates;if(!Array.isArray(at)||typeof at[0]!=='number')at=e.lngLat.toArray();new maplibregl.Popup({offset:12,maxWidth:'290px'}).setLngLat(at).setHTML(makeHtml(f.properties||{})).addTo(map);});map.on('mouseenter',id,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',id,()=>map.getCanvas().style.cursor='');}
 function popup(title,pairs){return '<div class="pop-title">'+htmlEscape(title)+'</div><div class="pop-kv">'+pairs.map(([a,b])=>'<span>'+htmlEscape(a)+'</span><span>'+htmlEscape(b)+'</span>').join('')+'</div>';}
-// v2.8: OpenFreeMap repeats road-reference shields (e.g. "6690") over short
+// v2.9: OpenFreeMap repeats road-reference shields (e.g. "6690") over short
 // line segments at street-level zoom. Keep them on overview maps, hide at close
 // zoom while retaining road names, bus route tags and stop icons.
 const ROAD_SHIELD_MAX_ZOOM = 15.6;
