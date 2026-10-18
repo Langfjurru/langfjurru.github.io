@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#f7f8f6">
-<meta name="app-version" content="2.15">
+<meta name="app-version" content="2.16">
 <meta name="description" content="Trondheim i 3D med levende AtB-busser, klikkbare holdeplasser og sanntidsavgangstavler fra Entur.">
-<title>Trondheim · 3D og sanntidskart · v2.15</title>
+<title>Trondheim · 3D og sanntidskart · v2.16</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <script defer src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <style>
@@ -152,6 +152,19 @@ body.route-focus .ship-name-tag{visibility:hidden}
 @media(max-width:640px){.weather-fab{right:10px;bottom:104px;width:min(240px,calc(100vw - 20px))}.weather-shell{right:9px;bottom:175px;width:min(310px,calc(100vw - 18px));max-height:min(62dvh,415px);padding:13px}}
 @media(max-width:355px){.weather-fab{width:218px}.weather-shell{max-height:55dvh}}
 
+
+/* v2.16 - Mobile interaction priority: route and departure panels must never
+   be obscured by the floating MET weather card. Weather returns when they close.
+   CSS also protects the close buttons even if the weather script fails. */
+@media(max-width:640px){
+ body.route-focus .weather-fab,
+ body.route-focus .weather-shell,
+ body:has(#departure-card:not([hidden])) .weather-fab,
+ body:has(#departure-card:not([hidden])) .weather-shell{display:none!important}
+ body.route-focus .selected-route-card{z-index:22}
+ #departure-card:not([hidden]){z-index:22}
+}
+
 /* v2.15: Frivillig utforsking av AtBs regionbusser. Lukket ved oppstart. */
 .atb-regions{margin:-4px 0 13px;border:1px solid #dce7e9;border-radius:12px;background:#f8fafb;padding:0}
 .atb-regions summary{cursor:pointer;padding:11px 12px;font-size:12px;font-weight:800;color:#264b59;list-style-position:inside}
@@ -167,7 +180,7 @@ body.route-focus .ship-name-tag{visibility:hidden}
 <div id="map-alert" class="map-alert" role="status" aria-live="polite" hidden><span id="map-alert-text"></span><button id="switch-basemap" type="button">Prøv 2D-kart</button><button id="dismiss-alert" class="dismiss" aria-label="Lukk varsel" type="button">×</button></div>
 <aside class="sidebar collapsed" id="panel" aria-label="Kartlag og sanntidsdata">
  <div class="pane">
-  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.15</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.15">v2.15</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
+  <div class="topline"><div><div class="brand"><span class="live"></span>Åpne geodata · Kartprototype v2.16</div><h1 class="headtitle">Trondheim <span class="release-tag" aria-label="Versjon 2.16">v2.16</span></h1><p class="tagline">AtB-busser · sanntidsavganger · 3D og rutetraseer</p></div><button class="minimise" id="collapse" title="Vis eller skjul kartmenyen" aria-label="Vis kartmenyen" aria-expanded="false">⌄</button></div>
   <div class="pane-body">
    <nav class="area-bar" aria-label="Kartutsnitt"><button class="active" data-area="city">Sentrum</button><button data-area="fjord">Fjorden</button><button data-area="vanvikan">Vanvikan</button><button data-area="brekstad">Brekstad</button></nav>
    <details class="atb-regions"><summary>Utforsk AtB i hele Trøndelag</summary>
@@ -229,7 +242,7 @@ body.route-focus .ship-name-tag{visibility:hidden}
  <div id="weather-hours" class="weather-hours" aria-label="Kommende timer"></div>
  <footer class="weather-foot"><span id="weather-updated">Kilde: <a href="https://www.met.no/" target="_blank" rel="noopener noreferrer">MET Norge</a> · bearbeidet prognose · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></span><button id="weather-refresh" class="weather-update" type="button" aria-label="Oppdater værmelding">↻ Oppdater</button></footer>
 </section>
-<div class="bottom-credit"><b>3D Trondheim · v2.15</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
+<div class="bottom-credit"><b>3D Trondheim · v2.16</b><br><small id="coordinates">63.4299° N / 10.3980° Ø</small></div>
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
 'use strict';
@@ -1520,6 +1533,22 @@ function toggle(open){panel.hidden=!open;openButton.setAttribute('aria-expanded'
 openButton.addEventListener('click',()=>toggle(panel.hidden));
 get('weather-close').addEventListener('click',()=>{toggle(false);openButton.focus();});
 get('weather-refresh').addEventListener('click',()=>refresh(true));
+
+// v2.16: When a route or a stop departure board opens on a phone,
+// close the expanded weather details. The compact weather card is temporarily
+// hidden by CSS and becomes visible as soon as the transit panel closes.
+function avoidWeatherOverlap(){
+ if(window.innerWidth>640)return;
+ const routeOpen=document.body.classList.contains('route-focus');
+ const departuresOpen=!get('departure-card').hidden;
+ if((routeOpen||departuresOpen)&&!panel.hidden)toggle(false);
+}
+const routeWeatherObserver=new MutationObserver(avoidWeatherOverlap);
+routeWeatherObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
+routeWeatherObserver.observe(get('departure-card'),{attributes:true,attributeFilter:['hidden']});
+window.addEventListener('resize',avoidWeatherOverlap);
+avoidWeatherOverlap();
+
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden)toggle(false);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
 refresh();
