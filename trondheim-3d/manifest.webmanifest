@@ -1,0 +1,42 @@
+{
+  "id": "./",
+  "name": "Trondheim 3D – kollektiv i sanntid",
+  "short_name": "Trondheim 3D",
+  "description": "3D-kart med AtB-busser i sanntid, holdeplasser, avgangstavler, busskamera og vær.",
+  "lang": "nb-NO",
+  "start_url": "./?app=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "orientation": "any",
+  "background_color": "#dce3df",
+  "theme_color": "#f7f8f6",
+  "categories": [
+    "navigation",
+    "travel",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
