@@ -1,4 +1,4 @@
-const CACHE = 'trondheim-3d-shell-v2.23';
+const CACHE = 'trondheim-3d-shell-v2.24';
 const SHELL = [
   './',
   './index.html',
