@@ -4,7 +4,7 @@
   "short_name": "Trondheim 3D",
   "description": "3D-kart med AtB-busser i sanntid, holdeplasser, avgangstavler, busskamera, vær og ferge 880 Flakk–Rørvik, GPS og trykkbare live-avganger fra holdeplass.",
   "lang": "nb-NO",
-  "start_url": "./?app=pwa-v229",
+  "start_url": "./?app=pwa-v230",
   "scope": "./",
   "display": "standalone",
   "display_override": [
