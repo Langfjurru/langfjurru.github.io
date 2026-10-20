@@ -2,9 +2,9 @@
   "id": "./",
   "name": "Trondheim 3D – kollektiv i sanntid",
   "short_name": "Trondheim 3D",
-  "description": "3D-kart med AtB-busser i sanntid, holdeplasser, avgangstavler, busskamera og vær.",
+  "description": "3D-kart med AtB-busser i sanntid, holdeplasser, avgangstavler, busskamera, vær og ferge 880 Flakk–Rørvik.",
   "lang": "nb-NO",
-  "start_url": "./?app=pwa-v226",
+  "start_url": "./?app=pwa-v227",
   "scope": "./",
   "display": "standalone",
   "display_override": [
