@@ -10383,7 +10383,7 @@ window.FDVU_TEGNINGSMOTOR_V1={version:DM1_VERSION,detect:dm1Detect,apply:dm1Appl
    drawingType, discipline, systemCode and requirementCode. */
 (function(){
 'use strict';
-const DM2_VERSION='Tegningsmotor v2 TEST';
+const DM2_VERSION='Tegningsmotor v2.4 - tegningsidentitet / symbolvakt TEST';
 function n(v){return typeof fdvuPANormSystem==='function'?fdvuPANormSystem(v):String(v||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/æ/g,'ae').replace(/ø/g,'o').replace(/å/g,'a').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
 function raw(item){return [item.file?.name||'',item.docType||'',item.description||'',item.compactSummary||'',String(item.text||'').slice(0,180000)].join('\n')}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -10422,7 +10422,52 @@ function titleFromSignals(t,f){
  if(/tegning va osv omrade|va osv omrade/.test(f))return 'Ledningsoversikt / situasjonskart';
  return '';
 }
-function result(o){return Object.assign({version:DM2_VERSION,type:'Teknisk tegning',title:'Teknisk tegning',discipline:'',systemCode:'',systemStrength:0,requirementCode:'',requirementKind:'',relatedSystem:'',confidence:75,basis:'',drawingNumber:'',technicalDrawingNumber:'',asBuilt:false,multiSystem:false,alternatives:[]},o)}
+function result(o){return Object.assign({version:DM2_VERSION,type:'Teknisk tegning',title:'Teknisk tegning',discipline:'',systemCode:'',systemStrength:0,requirementCode:'',requirementKind:'',relatedSystem:'',confidence:75,basis:'',drawingNumber:'',technicalDrawingNumber:'',asBuilt:false,multiSystem:false,alternatives:[],protectedIdentity:false,secondarySystems:[]},o)}
+
+function dm24FloorFromHimling(item,source){
+ const f=String(item?.file?.name||''),r=String(source||'');
+ let m=f.match(/himlingsplan\s*[-–]?\s*(kjeller|u\s*\d+|\d+\s*\.?\s*etasje)/i);
+ if(!m)m=r.match(/(?:tittel\s*:\s*)?himlingsplan\s*[-–]?\s*(kjeller|u\s*\d+|\d+\s*\.?\s*etasje)/i);
+ if(!m)return '';
+ let v=m[1].replace(/\s+/g,' ').replace(/\s*\.\s*/g,'.').trim();
+ if(/^u\s*\d+$/i.test(v))v=v.replace(/\s+/g,'').toUpperCase();
+ if(/\d/.test(v)&&!/etasje/i.test(v))v=v+' etasje';
+ return v.charAt(0).toLocaleUpperCase('nb-NO')+v.slice(1);
+}
+function dm24ProtectedDrawingIdentity(item,source,t,f){
+ const rawSource=String(source||''),rawFile=String(item?.file?.name||'');
+ const titleHimling=/\bhimlingsplan\b/i.test(rawFile)||/(?:^|\n)[^\n]{0,160}\bhimlingsplan\b/im.test(rawSource)||/\btittel\s*:\s*[^\n]{0,120}\bhimlingsplan\b/i.test(rawSource);
+ const ceilingContent=/\bhimlingstyper\b|\bsystemhimling\b|\bhofg\b|himlingsplate/i.test(rawSource);
+ if(titleHimling&&(ceilingContent||/himlingsplan/i.test(rawFile))){
+   const floor=dm24FloorFromHimling(item,rawSource);
+   return {kind:'himlingsplan',title:['Himlingsplan',floor].filter(Boolean).join(' - '),discipline:'ARK',requirementCode:'163',requirementKind:'ark_pdf',relatedSystem:'257',confidence:100};
+ }
+ return null;
+}
+function dm24LegendSystems(source){
+ const lines=String(source||'').split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+ const out=new Set();
+ for(let i=0;i<lines.length;i++){
+   if(!/^(?:symbol(?:er)?(?: teknisk himling)?|tegnforklaring|legend|forklaring)\b/i.test(lines[i]))continue;
+   const seg=lines.slice(i,i+90).join(' ').toLowerCase();
+   if(/ledelys|nødlys|nodlys/.test(seg))out.add('443');
+   if(/sprinkler/.test(seg))out.add('332');
+   if(/ventilasjon|tilluftsventil|avtrekksventil/.test(seg))out.add('360');
+   if(/røykdetektor|roykdetektor|brann/.test(seg))out.add('542');
+ }
+ return [...out];
+}
+function dm24EmergencyDrawingIdentity(item,source){
+ const f=n(item?.file?.name||''),raw=String(source||''),head=n(raw.split(/\r?\n/).slice(-80).join(' '));
+ const explicit=/\b(?:nodlysplan|ledelysplan|nodlystegning|ledelystegning)\b/.test(f)||/\b(?:nodlysplan|ledelysplan|nodlystegning|ledelystegning)\b/.test(head)||/\bledelys\s+etterlysende\b|\betterlysende\s+ledelys\b/.test(f);
+ const electric=/\bnodlysarmatur\b|\bnodlyssentral\b|\bselvtest\b|\bautotest\b|\bnodlyssystem\b|\barmaturtype\b/.test(n(raw))||/\brie\b/.test(head);
+ return {explicit,electric};
+}
+function dm24CoordinationOnly(source){
+ const x=n(source||'');
+ return /konf riv|konf rie|konferer riv|konferer rie|se riv|se rie/.test(x);
+}
+
 function dm23InheritedSystem(item){
  const cand=[
   {code:item?.r9SystemPlaceholder?.code,score:item?.r9SystemPlaceholder?.score,source:item?.r9SystemPlaceholder?.source||'systemmotor'},
@@ -10460,14 +10505,18 @@ function detect(item){
  const asBuilt=/som bygget|as built|asbuilt/.test(t)||/som bygget|asbuilt/.test(f);
  const markers=/\bmal(?:estokk)?\b|tegningsnr|tegningsnummer|tegningsnavn|rev\.?|format\b|som bygget|arbeidstegning|tilbudstegning|plan\b|snitt\b|skjema|tegning/.test(t);
  const title=titleFromSignals(t,f);
- const strongDrawingScore=dm23StrongDrawingIdentity(t,f,tech,title,item);
+ const protectedIdentity=dm24ProtectedDrawingIdentity(item,R,t,f);
+ const legendSystems=dm24LegendSystems(R);
+ const strongDrawingScore=dm23StrongDrawingIdentity(t,f,tech,protectedIdentity?.title||title,item);
  const guard=dm23NonDrawingGuard(item,t,f,strongDrawingScore);
  item.dm23Guard={blocked:guard.blocked,reason:guard.reason,strongDrawingScore};
  if(guard.blocked)return null;
  const drawingish=item.infoCode==='TE'||strongDrawingScore>=3||!!tech||!!title||(/\.pdf$/i.test(item.file?.name||'')&&/(?:oppriss|perspektivtegning|himlingsplan|mobleringsplan|skiltplan|fargeplan|branntegning|oversiktstegning|terrengtrapp|asbuilt|som bygget)/.test(f));
  if(!drawingish)return v1?Object.assign(result({}),v1):null;
  let r=null;
- if(/branntegning|brannplan/.test(t)||/branntegning/.test(f)){
+ if(protectedIdentity?.kind==='himlingsplan'){
+   r=result({type:'Som bygget ARK-tegning',title:protectedIdentity.title,discipline:'ARK',requirementCode:'163',requirementKind:'ark_pdf',relatedSystem:'257',confidence:protectedIdentity.confidence,protectedIdentity:true,secondarySystems:legendSystems,basis:'Tegningsidentiteten er låst av originalfilnavn/tittelfelt og himlingsinnhold: Himlingsplan. Symboler for ledelys, sprinkler, ventilasjon og andre tekniske fag behandles kun som koordinert sekundærinformasjon. Dokumentkrav 163 ARK; 257 Systemhimlinger er faglig tema.'});
+ } else if(/branntegning|brannplan/.test(t)||/branntegning/.test(f)){
    r=result({type:'Branntegning',title:'Branntegning - oversikt',discipline:'BRANN',requirementCode:'171',requirementKind:'fire_drawing',confidence:99,basis:'Brannteknisk tegningshode/tittel identifisert. 171 behandles som dokumentkategori/dokumentkrav, ikke prosjekt-TFM.'});
  } else if(/romningsplan|evakueringsplan/.test(t)){
    r=result({type:'Rømningsplan',title:'Rømningsplan',discipline:'BRANN',requirementCode:'172',requirementKind:'evacuation_drawing',confidence:99,basis:'Eksplisitt rømnings-/evakueringsplan identifisert.'});
@@ -10486,12 +10535,14 @@ function detect(item){
    r=result({type:'Vindusskjema',title:'Vindusskjema',discipline:'ARK',systemCode:'234',systemStrength:78,requirementCode:'234',requirementKind:'window_schedule',relatedSystem:'234',confidence:84,basis:'Filnavn/tegning viser vindusskjema. Generisk vindusskjema foreslås under 234 Vinduer, dører, porter; 244 er relevant alternativ dersom skjemaet gjelder innvendige vinduer.',alternatives:['244']});
  } else if(/terrengtrapp/.test(t)||/terrengtrapp/.test(f)){
    r=result({type:'Konstruksjonstegning',title:'Terrengtrapp',discipline:'LARK',systemCode:'722',systemStrength:99,requirementCode:'722',requirementKind:'construction_722',relatedSystem:'722',confidence:99,basis:'Eksplisitt terrengtrapp/håndløper og detaljtegning. ST10004 har direkte krav 722 Konstruksjonstegning; dette er ikke bare en generell plantegning.'});
- } else if(/ledelys|etterlysende/.test(t)||/ledelys|etterlysende/.test(f)){
-   const electric=/nodlys|nodlyssystem|armatur|batteri|sentral|led driver/.test(t);
-   if(electric){
-     r=result({type:'Nødlysplan',title:'Ledelys / nødlys',discipline:'RIE',systemCode:'443',systemStrength:91,requirementCode:'443',requirementKind:'emergency_system_drawing',relatedSystem:'443',confidence:92,basis:'Elektrisk nødlys/armaturkontekst identifisert; behandles som 443 Nødlyssystem.'});
+ } else if(/ledelys|etterlysende|nodlys/.test(t)||/ledelys|etterlysende|nodlys/.test(f)){
+   const em=dm24EmergencyDrawingIdentity(item,R);
+   if(em.explicit&&em.electric){
+     r=result({type:'Nødlysplan',title:'Ledelys / nødlys',discipline:'RIE',systemCode:'443',systemStrength:94,requirementCode:'443',requirementKind:'emergency_system_drawing',relatedSystem:'443',confidence:94,basis:'Eksplisitt nødlys-/ledelysplantegning identifisert i filnavn/tittelfelt sammen med RIE/nødlyssystem-kontekst. 443 brukes først når hovedidentiteten faktisk er nødlys, ikke når Ledelys bare står i tegnforklaringen.'});
+   } else if(em.explicit){
+     r=result({type:'Skiltplan / ledelysplan',title:'Etterlysende ledelys',discipline:'ARK',systemCode:'277',systemStrength:91,requirementCode:'163',requirementKind:'ark_pdf',relatedSystem:'277',confidence:92,basis:'Eksplisitt etterlysende ledelys/ledelysplan uten sterk elektrisk nødlyssystem-identitet. Faglig tema 277 Skilt og tavler; plantegning arkiveres under 163 ARK.'});
    } else {
-     r=result({type:'Skiltplan / ledelysplan',title:'Etterlysende ledelys',discipline:'ARK',systemCode:'277',systemStrength:91,requirementCode:'163',requirementKind:'ark_pdf',relatedSystem:'277',confidence:92,basis:'Etterlysende rømnings-/retningsskilt uten elektriske nødlyssignaler. Faglig tema 277 Skilt og tavler; plantegning arkiveres under 163 ARK.'});
+     r=result({type:'Teknisk tegning',title:title||'Teknisk tegning',discipline:'',confidence:72,secondarySystems:legendSystems,basis:'Ledelys/nødlys forekommer i dokumentet, men ikke som eksplisitt tegningstittel eller originalfilnavn. Signalet behandles som symbol-/koordineringsinformasjon og kan ikke alene gi 443.'});
    }
  } else if(/tegning va osv omrade|va osv omrade|geomatikk/.test(t)||/tegning va osv omrade/.test(f)){
    r=result({type:'Situasjons-/ledningsoversikt',title:'VA og tekniske ledninger - områdeoversikt',discipline:'MULTI',requirementCode:'163',requirementKind:'multi_pdf',confidence:82,basis:'Område-/ledningskart med flere tekniske forsyningssystemer. Ingen enkelt TFM-systemkode tvinges; fagvariant under 163 må kontrolleres.',multiSystem:true,alternatives:['RIV','RIE','LARK']});
@@ -10513,9 +10564,12 @@ function detect(item){
  }
  if(r){
   const inherited=dm23InheritedSystem(item);
-  if(!r.systemCode&&inherited){
+  if(!r.systemCode&&inherited&&!r.protectedIdentity){
    r.systemCode=inherited.code;r.systemStrength=Math.max(Number(r.systemStrength||0),Number(inherited.score||86));r.relatedSystem=r.relatedSystem||inherited.code;r.systemInherited=true;r.systemInheritedSource=inherited.source;
    r.basis=(r.basis?String(r.basis)+' ':'')+'Eksisterende systemtreff '+inherited.code+' beholdes fra '+inherited.source+'; Tegningsmotoren har ikke et sterkere motstridende system.';
+  } else if(r.protectedIdentity&&inherited){
+   r.secondarySystems=[...new Set([...(r.secondarySystems||[]),inherited.code])];
+   r.basis=(r.basis?String(r.basis)+' ':'')+'Et tidligere systemforslag '+inherited.code+' er ikke brukt i filnavnet fordi beskyttet tegningstittel har høyere autoritet.';
   }
   r.drawingNumber=dno;r.asBuilt=asBuilt;r.originalDocType=item.docType||'';r.originalV1=v1||null;
  }
@@ -10623,10 +10677,14 @@ function specificTitle(item){
  if(/tegning va osv omrade hovedbygget|va osv omrade hovedbygget/.test(f)||(/geomatikk/.test(s)&&/hovedbygget/.test(s)))return 'VA og tekniske ledninger område Hovedbygget';
  if(/oppriss/.test(s)&&/kjokken|rom 238/.test(s))return 'Oppriss kjokken ROM 238';
  if(/plan og perspektiv/.test(s)&&/kjokken|rom 238/.test(s))return 'Plan og perspektiv kjokken ROM 238';
+ if(/himlingsplan/.test(s)||/himlingsplan/.test(f)){
+   const mk=f.match(/himlingsplan\s+kjeller/)||s.match(/himlingsplan\s+kjeller/);if(mk)return 'Himlingsplan kjeller';
+   const mf=f.match(/himlingsplan\s+(\d+)\s+etasje/)||s.match(/himlingsplan\s+(\d+)\s+etasje/);if(mf)return `Himlingsplan ${mf[1]} etasje`;
+   return 'Himlingsplan';
+ }
  if(/ledelys|etterlysende/.test(s)||/ledelys|etterlysende/.test(f))return 'Etterlysende ledelys';
  if(/vindusskjema/.test(s)||/vindusskjema/.test(f))return 'Vindusskjema';
  if(/terrengtrapp/.test(s)||/terrengtrapp/.test(f))return 'Terrengtrapp';
- if((m=s.match(/himlingsplan\s*(\d+)?\s*(?:etasje)?\s*(ost)?/))){return ['Himlingsplan',m[1]||'',m[2]?'etasje øst':''].filter(Boolean).join(' ')}
  if((m=s.match(/mobleringsplan\s*(\d+)?/)))return ['Møbleringsplan',m[1]||''].filter(Boolean).join(' ');
  if(/branntegning/.test(s)||/branntegning/.test(f)){
    const plan=(s.match(/plan\s*(\d+)/)||f.match(/(?:^|\s)(\d+)\s*etg/)||[])[1];
@@ -11224,6 +11282,362 @@ if(typeof csvText==='function'&&typeof fdvuV118ParseDelimited==='function'){cons
 function p11Mount(){const st=document.createElement('style');st.textContent='.fdvu-p11{margin:6px 16px 12px;padding:10px 12px;border:1px solid #cbb9df;border-left:4px solid #7851a9;border-radius:9px;background:#faf7fd;color:#51386f;font-size:12px}.fdvu-p11-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.fdvu-p11-head span{font-size:11px;font-weight:800}.fdvu-p11-name{font-size:14px;font-weight:800;margin-top:4px}.fdvu-p11-meta{margin-top:4px;color:#71617e}.fdvu-p11-banner{margin:0 auto 12px;max-width:1420px;padding:10px 14px;border:1px solid #c7b6da;border-radius:10px;background:#faf7fd;color:#5a3d78;font-size:13px}';document.head.appendChild(st);const b=document.createElement('div');b.className='fdvu-p11-banner';b.innerHTML='<strong>Pipeline v1.1 TEST:</strong> hovedsystem ferdigstilles før dokumentfamilie og filnavn. Funksjonsbeskrivelser bruker originalfilnavn + eksplisitt systeminstans + sone, falske byggnummer fra tekniske referanser filtreres bort, og systeminstans krever XXX.YYY.';const a=document.querySelector('.fdvu-sm1-banner')||document.querySelector('.fdvu-fn1-banner')||document.querySelector('.header');a?.insertAdjacentElement('afterend',b);setTimeout(p11RenderAll,0)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',p11Mount,{once:true});else p11Mount();
 window.FDVU_PIPELINE_V11={version:P11_VERSION,prepare:p11Prepare,get:()=>items.filter(x=>x.status==='done').map(x=>({file:x.file?.name,newName:x.newName,result:x.pipelineV11,system:x.systemMotorV1}))};
+})();
+</script>
+
+
+<script>
+/* BRUKERTEST V3 - ST10003 tegningsnummer.
+   Tegningsnummer behandles som sporings-ID for tegninger og bevares i filnavnet.
+   Prioritet: eksplisitt Tegningsnr. i tegningshode > ledende ST10003-nummer i originalfilnavn.
+   Tverrreferanser inne i tegningen brukes ikke som tegningsnummer. */
+(function(){
+'use strict';
+const DN_VERSION='ST10003 tegningsnummer v1';
+function dnClean(v){return String(v||'').replace(/[\r\n]+/g,' ').replace(/\s+/g,' ').trim()}
+function dnStem(file){return String(file?.name||'').replace(/\.[^.]+$/,'').trim()}
+function dnNormalizeCandidate(v){return String(v||'').toUpperCase().replace(/[^0-9A-Z]/g,'')}
+function dnParse(v){
+ const n=dnNormalizeCandidate(v);
+ const m=n.match(/^(\d{4})([0-9A-Z]{3})([A-Z])(\d{3})([0-9A-Z])(\d{3})$/);
+ if(!m)return null;
+ return {number:n,building:m[1],floor:m[2],discipline:m[3],buildingPart:m[4],drawingType:m[5],serial:m[6],standard:'ST10003'};
+}
+function dnCandidatesAfterLabel(raw){
+ const s=String(raw||''),low=s.toLowerCase();
+ const labels=[];let p=0;
+ while((p=low.indexOf('tegningsnr',p))>=0){labels.push(p);p+=10}
+ const out=[];
+ for(const idx of labels){
+  const w=s.slice(idx,idx+650);
+  const re=/\b([0-9]{4}[0-9A-Z]{3}[A-Z][0-9]{3}[0-9A-Z][0-9]{3})\b/ig;
+  for(const m of w.matchAll(re)){const q=dnParse(m[1]);if(q&&!out.some(x=>x.number===q.number))out.push(q);}
+ }
+ return out;
+}
+function dnFilenameCandidate(item){
+ const stem=dnStem(item?.file);const m=stem.match(/^\s*([0-9]{4}[0-9A-Z]{3}[A-Z][0-9]{3}[0-9A-Z][0-9]{3})\b/i);
+ return m?dnParse(m[1]):null;
+}
+function dnDecision(item){
+ if(!item||item.status!=='done'||item.ocrBlocked)return null;
+ const drawing=String(item.infoCode||'').toUpperCase()==='TE'||!!item.drawingMotorV2||/tegning|skjema|plan/i.test(String(item.docType||''));
+ if(!drawing)return null;
+ const raw=String(item.text||'');
+ const labelled=dnCandidatesAfterLabel(raw);
+ const title=labelled.length?labelled[labelled.length-1]:null;
+ const file=dnFilenameCandidate(item);
+ let chosen=title||file||null;
+ if(!chosen)return null;
+ const conflict=!!(title&&file&&title.number!==file.number);
+ return {...chosen,source:title?'Tegningshode - Tegningsnr.':'Originalfilnavn - ledende ST10003-nummer',titleNumber:title?.number||'',filenameNumber:file?.number||'',conflict,version:DN_VERSION};
+}
+function dnApply(item){
+ const d=dnDecision(item);item.drawingNumberST10003=d;if(!d)return null;
+ item.drawingNumber=d.number;
+ item.drawingNumberFull=d.number;
+ item.drawingNumberParts={building:d.building,floor:d.floor,discipline:d.discipline,buildingPart:d.buildingPart,drawingType:d.drawingType,serial:d.serial};
+ if(item.drawingMotorV2){item.drawingMotorV2.drawingNumber=d.number;item.drawingMotorV2.st10003DrawingNumber=d.number;item.drawingMotorV2.drawingNumberSource=d.source;}
+ if(item.drawingMotorV1)item.drawingMotorV1.drawingNumber=d.number;
+ if(d.conflict){
+  item.warnings=item.warnings||[];
+  const msg='Tegningsnummer avviker mellom tegningshode ('+d.titleNumber+') og originalfilnavn ('+d.filenameNumber+'). Tegningshodet er prioritert.';
+  if(!item.warnings.includes(msg))item.warnings.push(msg);
+ }
+ return d;
+}
+function dnInsert(name,item){
+ const d=item?.drawingNumberST10003||dnApply(item);if(!d||!name)return name;
+ const s=String(name),dot=s.lastIndexOf('.'),ext=dot>=0?s.slice(dot):'',base=dot>=0?s.slice(0,dot):s;
+ let parts=base.split('_').filter(Boolean);
+ parts=parts.filter(p=>dnNormalizeCandidate(p)!==d.number);
+ let ix=parts.findIndex(p=>p.toUpperCase()==='TE');
+ if(ix>=0)parts.splice(ix+1,0,d.number);
+ else {
+  const codeIx=parts.findIndex(p=>/^[1-8]\d{2}$/.test(p));
+  if(codeIx>=0)parts.splice(codeIx+1,0,d.number);else parts.unshift(d.number);
+ }
+ return parts.join('_')+ext;
+}
+const dnPrevBuild=buildFilename;
+buildFilename=function(item){dnApply(item);return dnInsert(dnPrevBuild(item),item)};
+const dnPrevAnalyze=analyzeOne;
+analyzeOne=async function(item){await dnPrevAnalyze(item);if(item?.status==='done'&&!item.ocrBlocked){dnApply(item);item.newName=buildFilename(item)}};
+try{for(const item of items.filter(x=>x.status==='done'&&!x.ocrBlocked)){dnApply(item);item.newName=buildFilename(item)}}catch(e){console.warn('ST10003 tegningsnummer init',e)}
+function dnEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function dnRenderOne(item){
+ const d=item?.drawingNumberST10003;if(!d)return;const card=document.getElementById('row-'+item.id);if(!card)return;
+ let box=card.querySelector(':scope .fdvu-drawing-number');if(!box){box=document.createElement('div');box.className='fdvu-drawing-number';const fn=card.querySelector('.filename');if(fn)fn.insertAdjacentElement('afterend',box);else card.querySelector('.doc-top')?.insertAdjacentElement('afterend',box);}
+ box.innerHTML='<strong>Tegningsnr. '+dnEsc(d.number)+'</strong><span>'+dnEsc(d.source)+' · Bygg '+dnEsc(d.building)+' · Etasje '+dnEsc(d.floor)+' · Fag '+dnEsc(d.discipline)+' · Bygningsdel '+dnEsc(d.buildingPart)+' · Type '+dnEsc(d.drawingType)+' · Løpenr. '+dnEsc(d.serial)+'</span>'+(d.conflict?'<em>Kontroller: tegningshode og originalfilnavn har ulikt tegningsnummer.</em>':'');
+}
+function dnRenderAll(){for(const item of items||[])if(item.status==='done')dnRenderOne(item)}
+const dnPrevRender=renderTable;renderTable=function(...args){const z=dnPrevRender.apply(this,args);setTimeout(dnRenderAll,0);return z};
+if(typeof csvText==='function'&&typeof fdvuV118ParseDelimited==='function'){
+ const dnPrevCsv=csvText;csvText=function(){const table=fdvuV118ParseDelimited(dnPrevCsv());if(!table.length)return '\ufeff';const h=table[0],orig=h.indexOf('Originalfil');h.push('Tegningsnummer ST10003','Tegningsnummer kilde','Tegningsnr bygg','Tegningsnr etasje','Tegningsnr disiplin','Tegningsnr bygningsdel','Tegningsnr type','Tegningsnr løpenr','Tegningsnummer konflikt');for(let i=1;i<table.length;i++){const item=(items||[]).find(x=>x.file?.name===(orig>=0?table[i][orig]:'')),d=item?.drawingNumberST10003||{};table[i].push(d.number||'',d.source||'',d.building||'',d.floor||'',d.discipline||'',d.buildingPart||'',d.drawingType||'',d.serial||'',d.conflict?'Ja':'')}return '\ufeff'+table.map(row=>row.map(csvEscape).join(';')).join('\r\n')}
+}
+function dnMount(){
+ const st=document.createElement('style');st.textContent='.fdvu-drawing-number{margin:7px 0 0;padding:8px 10px;border:1px solid #d8e2e7;border-radius:8px;background:#f8fafb;font-size:11px;color:#53636d;display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap}.fdvu-drawing-number strong{color:#24343e;font-size:12px}.fdvu-drawing-number span{flex:1;min-width:260px}.fdvu-drawing-number em{color:#8b5b0b;font-style:normal;font-weight:700}';document.head.appendChild(st);setTimeout(dnRenderAll,0);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',dnMount,{once:true});else dnMount();
+window.FDVU_TEGNINGSNUMMER_ST10003={version:DN_VERSION,parse:dnParse,decision:dnDecision,apply:dnApply,get:()=>items.filter(x=>x.status==='done').map(x=>({file:x.file?.name,drawingNumber:x.drawingNumberST10003,newName:x.newName}))};
+})();
+</script>
+
+<script>
+/* BRUKERTEST V4 - ST10003 systemskjema.
+   Seks forbedringer:
+   1) posisjonsriktig ST10003-parser med OCR-korreksjon I/1 i tegningstypefelt,
+   2) type I låser dokumentfamilien til Systemskjema,
+   3) bygningsdelskoden i tegningsnummeret blir primær system-/klassifikasjonskode,
+   4) systemkoder inne i diagrammet behandles som sekundære/relaterte,
+   5) hovedtittel prioriteres fra tittelblokk + originalfilnavn,
+   6) sikkert system beholdes selv når ST10004 ikke har et passende systemskjemakrav. */
+(function(){
+'use strict';
+const SD_VERSION='ST10003 systemskjema v1';
+const SD_TYPES={A:'Oversiktstegning',B:'Oversiktstegning',C:'Utomhus',D:'Plantegning',E:'Utsparingsplan',F:'Branntegning',G:'Oppriss, snitt eller fasade',H:'Detaljtegning',I:'Systemskjema',J:'Skjema',K:'Funksjonsskjema',L:'Møbleringsplan',M:'Utsmykning',N:'Skjørteplan',O:'Armering',P:'Elementtegning',Q:'Oppleggsskjema',R:'Flytskjema',S:'Strømveisskjema',T:'Koblingsskjema'};
+const SD_DISC={A:'Arkitekt',B:'Bygg',D:'Andre installasjoner',E:'Elektroteknikk',F:'Branndokumentasjon',G:'Geoteknikk',H:'Medisinsk virksomhet',I:'Interiørarkitekt',L:'Landskap',P:'Prosess',S:'Automasjon og sentral driftskontroll',T:'Tele og automatisering',V:'VVS',W:'Vei og trafikk',X:'Byggherre',Y:'Entreprenør/leverandør',Z:'Offentlig myndighet'};
+const SD_SYSTEM_LABELS={430:'Elkraft',514:'Inntakskabler for teleanlegg',542:'Brannalarm',549:'Andre installasjoner for alarm og signal'};
+function sdClean(v){return String(v||'').replace(/[\r\n]+/g,' ').replace(/\s+/g,' ').trim()}
+function sdNorm(v){return sdClean(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/æ/g,'ae').replace(/ø/g,'o').replace(/å/g,'a')}
+function sdStem(file){return String(file?.name||'').replace(/\.[^.]+$/,'').trim()}
+function sdNormalizeCandidate(v){return String(v||'').toUpperCase().replace(/[^0-9A-Z]/g,'')}
+function sdParse(v,ctx){
+ let n=sdNormalizeCandidate(v);if(n.length!==15)return null;
+ // ST10003: 4 bygg + 3 etasje + 1 disiplin + 3 bygningsdel + 1 TYPE BOKSTAV + 3 løpenr.
+ const building=n.slice(0,4),floor=n.slice(4,7),discipline=n.slice(7,8),part=n.slice(8,11),rawType=n.slice(11,12),serial=n.slice(12,15);
+ if(!/^\d{4}$/.test(building)||!/^[0-9A-Z]{3}$/.test(floor)||!/^[A-Z]$/.test(discipline)||!/^\d{3}$/.test(part)||!/^\d{3}$/.test(serial))return null;
+ let type=rawType,repaired=false,repair='';
+ // OCR commonly confuses capital I with digit 1. A digit is invalid in this ST10003 position.
+ if(type==='1'){type='I';repaired=true;repair='Tegningstypefelt 1 er korrigert til I (Systemskjema) etter ST10003-posisjon.';}
+ else if(type==='0'){type='O';repaired=true;repair='Tegningstypefelt 0 er korrigert til O etter ST10003-posisjon.';}
+ if(!/^[A-Z]$/.test(type)||!SD_TYPES[type])return null;
+ const number=building+floor+discipline+part+type+serial;
+ return {number,building,floor,discipline,buildingPart:part,drawingType:type,drawingTypeLabel:SD_TYPES[type],serial,standard:'ST10003',repaired,repair,rawNumber:n,context:ctx||''};
+}
+function sdFilenameMeta(item){
+ const stem=sdStem(item?.file);const m=stem.match(/^\s*([0-9A-Z]{15})\b\s*[-_ ]*(.*)$/i);if(!m)return null;
+ const p=sdParse(m[1],'originalfilnavn');if(!p)return null;p.filenameTitle=sdClean(m[2]);return p;
+}
+function sdHeaderNumbers(item){
+ const raw=String(item?.text||''),low=raw.toLowerCase(),out=[];let pos=0;
+ while((pos=low.indexOf('tegningsnr',pos))>=0){
+  const w=raw.slice(pos,pos+850);const re=/\b([0-9]{4}[0-9A-Z]{3}[A-Z][0-9]{3}[0-9A-Z][0-9]{3})\b/ig;
+  for(const m of w.matchAll(re)){const p=sdParse(m[1],'tegningshode');if(p&&!out.some(x=>x.number===p.number))out.push(p);}
+  pos+=10;
+ }
+ return out;
+}
+function sdTitleCandidates(item,fileTitle){
+ const raw=String(item?.text||''),lines=raw.split(/\r?\n/).map(sdClean).filter(Boolean),out=[];
+ const add=(title,source,base=0)=>{title=sdClean(title).replace(/\s*Filnavn\s*:.*$/i,'').trim();if(title.length<3||title.length>140)return;let score=base;const n=sdNorm(title),f=sdNorm(fileTitle);
+   if(/\bstigeledningsskjema\b/.test(n))score+=75;else if(/\bsystemskjema\b/.test(n))score+=70;else if(/\b(?:skjema|plan|tegning)\b/.test(n))score+=15;
+   if(f&&n===f)score+=100;else if(f&&(n.includes(f)||f.includes(n)))score+=65;else if(f){const ft=f.split(/\s+/).filter(x=>x.length>3),hit=ft.filter(x=>n.includes(x)).length;score+=hit*12;}
+   if(/jordingsplan utenomhus/.test(n)&&!/jording/.test(f))score-=55;
+   out.push({title,source,score});};
+ if(fileTitle)add(fileTitle,'originalfilnavn',90);
+ for(let i=0;i<lines.length;i++){
+   const line=lines[i],idx=line.toLowerCase().indexOf('tittel:');if(idx<0)continue;
+   const after=sdClean(line.slice(idx+7));if(after&&!/^(godkjent|kontroll|sign|rev|filnavn)/i.test(after))add(after,'tegningshode',55);
+   for(let j=i+1;j<Math.min(lines.length,i+6);j++){const cand=lines[j];if(/^(?:godkjent|kontroll prosjekt|sign\.?|kontroll|filnavn|rev(?:isjon)?|dato|målestokk|adresse|prosjektnr|tegningsnr)\s*:?/i.test(cand))continue;add(cand,'tegningshode',62);break;}
+ }
+ const bik=raw.match(/#Bikubeegenskaper;[^#]*?Tittel=([^;#]+)/i);if(bik)add(bik[1],'Bikube-metadata',35);
+ out.sort((a,b)=>b.score-a.score||a.title.length-b.title.length);return out;
+}
+function sdExactSystemRequirement(code){
+ if(typeof FDVU_PA_REQUIREMENTS==='undefined')return null;
+ const hit=FDVU_PA_REQUIREMENTS.find(r=>String(r[0])===String(code)&&/tegning/i.test(String(r[1]||''))&&/som bygget systemskjema/i.test(String(r[2]||'')));
+ return hit?{code:String(hit[0]),info:String(hit[1]),doc:String(hit[2])}:null;
+}
+function sdRelatedSystems(item,main){
+ const raw=String(item?.text||''),out=[];for(const m of raw.matchAll(/\b([2-7]\d{2})[.,](\d{3})\b/g)){const c=m[1];if(c!==main&&!out.includes(c))out.push(c);if(out.length>=12)break;}return out;
+}
+function sdDecision(item){
+ if(!item||item.status!=='done'||item.ocrBlocked)return null;
+ const file=sdFilenameMeta(item),heads=sdHeaderNumbers(item),head=heads.length?heads[heads.length-1]:null;
+ // Prefer explicit heading. If OCR repaired I/1 and filename confirms the same remaining positions, they are treated as the same number.
+ let chosen=head||file||null;if(!chosen)return null;
+ const fileTitle=file?.filenameTitle||'';const titleCandidates=sdTitleCandidates(item,fileTitle);const title=titleCandidates[0]?.title||fileTitle||'';
+ const titleNorm=sdNorm(title+' '+fileTitle);
+ const systemDiagram=chosen.drawingType==='I'||/\b(?:systemskjema|stigeledningsskjema)\b/.test(titleNorm);
+ if(!systemDiagram)return null;
+ // If heading and filename differ only due OCR I/1 repair, normalize them before conflict assessment.
+ const conflict=!!(head&&file&&head.number!==file.number);
+ const code=chosen.buildingPart;const exactRequirement=sdExactSystemRequirement(code);const related=sdRelatedSystems(item,code);
+ return {...chosen,version:SD_VERSION,systemDiagram:true,systemCode:code,systemLabel:SD_SYSTEM_LABELS[code]||('Bygningsdel '+code),title:title||'Systemskjema',titleSource:titleCandidates[0]?.source||'tegningsnummer',titleCandidates:titleCandidates.slice(0,5),exactRequirement,relatedSystems:related,headerNumber:head?.number||'',filenameNumber:file?.number||'',conflict,source:head?'Tegningshode + ST10003':'Originalfilnavn + ST10003'};
+}
+function sdApply(item){
+ const d=sdDecision(item);item.systemDiagramV4=d;if(!d)return null;
+ item.drawingNumberST10003={number:d.number,building:d.building,floor:d.floor,discipline:d.discipline,buildingPart:d.buildingPart,drawingType:d.drawingType,serial:d.serial,standard:'ST10003',source:d.source,titleNumber:d.headerNumber,filenameNumber:d.filenameNumber,conflict:d.conflict,repaired:d.repaired,repair:d.repair};
+ item.drawingNumber=d.number;item.drawingNumberFull=d.number;item.drawingNumberParts={building:d.building,floor:d.floor,discipline:d.discipline,buildingPart:d.buildingPart,drawingType:d.drawingType,serial:d.serial};
+ // Systemskjema-lock: the declared ST10003 building-part code is primary classification/system evidence.
+ item.tfm=d.systemCode;item.systemName=d.systemLabel;item.paAutoCode=true;item.infoCode='TE';item.infoLabel='Tegning';item.docType=/^stigeledningsskjema/i.test(d.title)?'Stigeledningsskjema':'Systemskjema';item.description=d.title;item.finalFilenameDescription=d.title;
+ const oldPa=item.paSystem||{};item.paSystem={...oldPa,code:d.systemCode,label:d.systemLabel,score:99,level:'high',verified:true,source:'ST10003 tegningsnummer - bygningsdelskode',basis:'Validert ST10003-systemskjema: bygningsdelskoden '+d.systemCode+' er tegningens deklarerte hovedklassifikasjon. Koder inne i diagrammet behandles som relaterte.',precision:'3-digit',systemUse:'system',alternatives:(d.relatedSystems||[]).map(code=>({code,label:'Relatert system i diagram',score:48}))};
+ if(typeof fdvuPARequirementMatches==='function')item.paSystem.requirementMatches=fdvuPARequirementMatches(item,d.systemCode,item.paSystem.general?.code||'');
+ const reqCode=d.exactRequirement?d.systemCode:'';const reqKind=d.exactRequirement?'system_diagram_exact':'system_diagram_no_exact_requirement';
+ const common={type:item.docType,title:d.title,discipline:SD_DISC[d.discipline]||d.discipline,systemCode:d.systemCode,systemStrength:99,requirementCode:reqCode,requirementKind:reqKind,relatedSystem:(d.relatedSystems||[]).join(', '),confidence:99,basis:'ST10003 type '+d.drawingType+' ('+d.drawingTypeLabel+') + bygningsdel '+d.systemCode+' + prioritert tittelfelt/originalfilnavn.',infoCode:'TE',infoLabel:'Tegning',drawingNumber:d.number,st10003DrawingNumber:d.number,drawingNumberSource:d.source,finalFilenameDescription:d.title,finalFilenameSource:'ST10003 tegningsnummer + hovedtittel'};
+ item.drawingMotorV2={...(item.drawingMotorV2||{}),...common};item.drawingMotorV1={...(item.drawingMotorV1||{}),...common};
+ item.systemMotorV1={version:SD_VERSION,family:d.systemCode,label:d.systemLabel,score:99,instances:[],instanceConflict:false,evidence:[{code:d.systemCode,kind:'ST10003-building-part',weight:130,excerpt:d.number,label:d.title}],sourceKinds:['ST10003-tegningsnummer'],related:d.relatedSystems||[],controlMention:false,allFamilies:[{family:d.systemCode,score:130}]};
+ item.r9SystemPlaceholder={code:d.systemCode,score:99,source:'ST10003 systemskjema',reason:d.number+' · '+d.title};
+ if(item.docIdentity?.fields){item.docIdentity.fields.technical={value:d.systemCode,source:'ST10003 systemskjema - deklarert bygningsdel',score:99,confidence:99,basis:d.number,verified:false,status:'candidate'};item.docIdentity.fields.description={value:d.title,source:'Tegningshode/originalfilnavn',score:99,confidence:99,basis:'Hovedtittel for systemskjema',verified:false,status:'candidate'};}
+ item.filenameMotorV1={...(item.filenameMotorV1||{}),version:SD_VERSION,family:'drawing',description:d.title,source:'ST10003 + tegningshode/originalfilnavn',quality:'høy',system:d.systemCode};
+ item._fdvuV1237Cache=null;item.v1237Rank=null;
+ item.warnings=(item.warnings||[]).filter(w=>!/Tegningsnummer avviker mellom tegningshode/i.test(String(w)));
+ if(d.conflict){const msg='ST10003: Tegningsnummer avviker mellom tegningshode ('+d.headerNumber+') og originalfilnavn ('+d.filenameNumber+'). Tegningshodet er prioritert.';if(!item.warnings.includes(msg))item.warnings.push(msg);}
+ if(!d.exactRequirement){const msg='Systemskjema: system/bygningsdel '+d.systemCode+' er sikkert fra ST10003, men ST10004-katalogen har ikke et eksakt «Som bygget systemskjema»-krav for denne koden. Dokumentkravet må kontrolleres manuelt.';if(!item.warnings.includes(msg))item.warnings.push(msg);}
+ return d;
+}
+function sdSlug(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/æ/gi,'ae').replace(/ø/gi,'o').replace(/å/gi,'a').replace(/[^0-9A-Za-z]+/g,'_').replace(/^_+|_+$/g,'').toLowerCase()}
+function sdFilename(item,d){
+ const ext=(item.file?.name?.match(/\.[^.]+$/)?.[0]||'.pdf').toLowerCase();const mode=document.querySelector('input[name="nameMode"]:checked')?.value||'ntnu';const desc=sdSlug(d.title)||'systemskjema';
+ if(mode==='simple')return [d.number,desc].filter(Boolean).join('_')+ext;
+ const date=sdClean(item.date||document.getElementById('date')?.value||''),building=sdClean(item.building||document.getElementById('building')?.value||''),project=sdClean(item.project||document.getElementById('project')?.value||'');
+ const parts=[date,building,d.systemCode,'TE',d.number,project,desc].filter(Boolean).map(v=>typeof safeFilenamePart==='function'?safeFilenamePart(v):String(v).replace(/[^0-9A-Za-z._-]+/g,'_'));
+ return parts.join('_')+ext;
+}
+const sdPrevBuild=buildFilename;
+buildFilename=function(item){const d=sdApply(item);const old=sdPrevBuild(item);const finalD=sdApply(item)||d;return finalD?sdFilename(item,finalD):old};
+const sdPrevAnalyze=analyzeOne;
+analyzeOne=async function(item){await sdPrevAnalyze(item);if(item?.status==='done'&&!item.ocrBlocked){const d=sdApply(item);if(d)item.newName=buildFilename(item)}};
+try{for(const item of items.filter(x=>x.status==='done'&&!x.ocrBlocked)){const d=sdApply(item);if(d)item.newName=buildFilename(item)}}catch(e){console.warn('ST10003 systemskjema init',e)}
+function sdEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function sdRenderOne(item){const d=item?.systemDiagramV4;if(!d)return;const card=document.getElementById('row-'+item.id);if(!card)return;
+ // Reuse the existing drawing-number chip, but enrich it with systemskjema interpretation.
+ let box=card.querySelector(':scope .fdvu-drawing-number');if(!box){box=document.createElement('div');box.className='fdvu-drawing-number';const fn=card.querySelector('.filename');if(fn)fn.insertAdjacentElement('afterend',box);else card.querySelector('.doc-top')?.insertAdjacentElement('afterend',box);}
+ box.innerHTML='<strong>Tegningsnr. '+sdEsc(d.number)+'</strong><span>ST10003 · '+sdEsc(SD_DISC[d.discipline]||d.discipline)+' · Bygningsdel/system '+sdEsc(d.systemCode)+' · '+sdEsc(d.drawingTypeLabel)+' · '+sdEsc(d.title)+'</span>'+(d.repaired?'<em>'+sdEsc(d.repair)+'</em>':'')+(d.conflict?'<em>Kontroller tegningsnummer: tegningshode og originalfilnavn avviker.</em>':'');
+}
+function sdRenderAll(){for(const item of items||[])if(item.status==='done')sdRenderOne(item)}
+const sdPrevRender=renderTable;renderTable=function(...args){const z=sdPrevRender.apply(this,args);setTimeout(sdRenderAll,0);return z};
+if(typeof csvText==='function'&&typeof fdvuV118ParseDelimited==='function'){
+ const sdPrevCsv=csvText;csvText=function(){const table=fdvuV118ParseDelimited(sdPrevCsv());if(!table.length)return '\ufeff';const h=table[0],orig=h.indexOf('Originalfil');h.push('Systemskjema V4 hovedsystem','Systemskjema V4 tittel','Systemskjema V4 tegningstype','Systemskjema V4 relaterte systemer','Systemskjema V4 eksakt dokumentkrav','Systemskjema V4 OCR-reparasjon');for(let i=1;i<table.length;i++){const item=(items||[]).find(x=>x.file?.name===(orig>=0?table[i][orig]:'')),d=item?.systemDiagramV4||{};table[i].push(d.systemCode||'',d.title||'',d.drawingTypeLabel||'',(d.relatedSystems||[]).join(' | '),d.exactRequirement?d.exactRequirement.doc:'',d.repair||'')}return '\ufeff'+table.map(row=>row.map(csvEscape).join(';')).join('\r\n')}
+}
+function sdMount(){const st=document.createElement('style');st.textContent='.fdvu-sd4-hidden{display:none!important}';document.head.appendChild(st);setTimeout(sdRenderAll,0)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sdMount,{once:true});else sdMount();
+window.FDVU_SYSTEMSKJEMA_V4={version:SD_VERSION,parse:sdParse,decision:sdDecision,apply:sdApply,get:()=>items.filter(x=>x.status==='done').map(x=>({file:x.file?.name,newName:x.newName,result:x.systemDiagramV4}))};
+})();
+</script>
+
+
+<style>
+.fdvu-package-v5{margin:8px 0 0;padding:9px 11px;border:1px solid #cfe1d6;border-left:4px solid #2b8a60;border-radius:8px;background:#f5fbf7;font-size:11px;color:#41584b;display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap}
+.fdvu-package-v5 strong{color:#174f37;font-size:12px}.fdvu-package-v5 span{flex:1;min-width:260px}.fdvu-package-v5 em{font-style:normal;color:#75531d;font-weight:700}
+</style>
+<script>
+/* Brukertest V5 - hoveddokument/vedlegg, sluttprotokoll 116, forside-dato og AT->PK. */
+(function(){
+'use strict';
+const V5_VERSION='5.0.0';
+function v5Norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/æ/g,'ae').replace(/ø/g,'o').replace(/å/g,'a').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
+function v5Date(v){
+ const s=String(v||'').trim();let m=s.match(/\b(20\d{2})[-.\/]?(\d{2})[-.\/]?(\d{2})\b/);if(m)return m[1]+m[2]+m[3];
+ m=s.match(/\b(\d{1,2})[.\/-](\d{1,2})[.\/-](20\d{2})\b/);if(m)return m[3]+String(m[2]).padStart(2,'0')+String(m[1]).padStart(2,'0');
+ return '';
+}
+function v5TrialCandidate(item){
+ const meta=item?.originalMeta||{},fn=v5Norm(item?.file?.name||''),desc=v5Norm(meta.description||item?.description||''),cls=item?.summary?.classification?.key||item?.suggestResult?.classification?.key||'';
+ const code116=String(meta.tfm||item?.tfm||'').match(/^116(?:\.|$)/)||/(?:^|\s)116(?:\s|$)/.test(fn);
+ const closeout=/sluttprotokoll|slutt protokoll|ferdig provedrift|avsluttet provedrift|provedrift signert/.test(fn+' '+desc)||cls==='trial_closeout';
+ return !!(code116&&closeout);
+}
+async function v5FirstPageIdentity(item){
+ if(item._v5FirstPageIdentity)return item._v5FirstPageIdentity;
+ const result={text:'',nativeText:'',ocrText:'',date:'',dateExplicit:false,title:'',ocrUsed:false,source:'',error:''};
+ try{
+  const deps=await fdvuV17Dependencies();const data=new Uint8Array(await item.file.arrayBuffer());const pdf=await deps.pdfjs.getDocument({data,disableFontFace:true}).promise;
+  try{
+   const page=await pdf.getPage(1);let native='';
+   try{const tc=await page.getTextContent();native=(tc.items||[]).map(x=>String(x.str||'').trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim()}catch(e){}
+   result.nativeText=native;
+   let combined=native;
+   const needsOcr=native.replace(/\s/g,'').length<140||!/(?:sluttprotokoll|pr[oø]vedrift|\bdato\b)/i.test(native);
+   if(needsOcr){
+    item.ocrAttempted=true;item.progress='OCR: leser hoveddokumentets forside';try{renderRow(item.id)}catch(e){}
+    let worker=null;
+    try{
+     worker=await deps.Tesseract.createWorker('nor+eng',1);
+     const vp0=page.getViewport({scale:2});const factor=Math.min(1,2600/Math.max(vp0.width,vp0.height));const vp=page.getViewport({scale:2*factor});
+     const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.floor(vp.width));canvas.height=Math.max(1,Math.floor(vp.height));const ctx=canvas.getContext('2d',{willReadFrequently:true});
+     await page.render({canvasContext:ctx,viewport:vp}).promise;const o=await worker.recognize(canvas);result.ocrText=String(o?.data?.text||'').trim();result.ocrUsed=!!result.ocrText;combined=[native,result.ocrText].filter(Boolean).join('\n');canvas.width=0;canvas.height=0;
+    }catch(e){result.error=String(e?.message||e)}finally{try{if(worker)await worker.terminate()}catch(e){}}
+   }
+   result.text=combined;
+   const dm=combined.match(/\bDato\s*[:;]?\s*(\d{1,2}[.\/-]\d{1,2}[.\/-]20\d{2}|20\d{2}[.\/-]\d{1,2}[.\/-]\d{1,2})\b/i);if(dm){result.date=v5Date(dm[1]);result.dateExplicit=!!result.date;}
+   if(!result.date){const all=[...combined.matchAll(/\b(\d{1,2}[.\/-]\d{1,2}[.\/-]20\d{2})\b/g)].map(x=>v5Date(x[1])).filter(Boolean);if(all.length===1)result.date=all[0];}
+   const lines=combined.split(/\n+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);const titleLine=lines.find(x=>/sluttprotokoll.{0,80}pr[oø]vedrift|pr[oø]vedrift.{0,80}sluttprotokoll/i.test(x));if(titleLine)result.title=titleLine.slice(0,180);
+   result.source=result.ocrUsed?'OCR av hoveddokumentets forside':'PDF-tekst på hoveddokumentets forside';page.cleanup();
+  }finally{await pdf.destroy()}
+ }catch(e){result.error=String(e?.message||e)}
+ item._v5FirstPageIdentity=result;return result;
+}
+function v5Description(item){
+ const source=v5Norm(item?.originalMeta?.description||item?.file?.name||'');
+ if(/signert/.test(source))return 'sluttprotokoll provedrift signert';
+ return 'sluttprotokoll provedrift';
+}
+function v5SetDateField(item,date,source){
+ if(!date)return;
+ item.date=date;item.v5DateConfirmed=true;item.v5DateSource=source;
+ item.v1221DateApproved={date,source,at:new Date().toISOString(),automatic:true};
+ const value={value:date,source,score:100,confidence:100,basis:'Eksplisitt Dato-felt på hoveddokumentets forside. Vedleggsdatoer er sekundære.',verified:true,status:'verified'};
+ if(item.docIdentity?.fields)item.docIdentity.fields.date={...(item.docIdentity.fields.date||{}),...value};
+ if(item.docIdentity?.v121?.fields)item.docIdentity.v121.fields.date={...(item.docIdentity.v121.fields.date||{}),...value};
+}
+function v5ApplyCore(item,front){
+ const meta=item.originalMeta||{},frontDate=front?.date||'',filenameDate=v5Date(meta.date||'');
+ const date=frontDate||filenameDate;const dateConfirmed=!!(frontDate&&front?.dateExplicit);
+ if(date)v5SetDateField(item,date,dateConfirmed?(filenameDate===frontDate?'Forsidedato + originalfilnavn, kryssbekreftet':'Eksplisitt Dato-felt på hoveddokumentets forside'):'Originalfilnavn - hoveddokumentforslag');
+ if(!dateConfirmed)item.v5DateConfirmed=false;
+ item.infoCode='PK';item.infoLabel='Protokoll';item.docType='Sluttprotokoll prøvedrift';item.description=v5Description(item);item.descriptionSource='hoveddokument + originalfilnavn';item.suggestion='Sluttprotokoll prøvedrift';item.confidence='high';item.systemName='Protokoller';item.tfm='116';
+ item.compactSummary='Sluttprotokoll for gjennomført prøvedrift. Hoveddokumentet prioriteres foran datoer, dokumentnumre og faginnhold i vedlegg.';
+ const cls={key:'trial_closeout',label:'Sluttprotokoll / avslutningsrapport prøvedrift',confidence:'high',reason:'Originalfilnavn og hoveddokument identifiserer sluttprotokoll for prøvedrift.'};
+ if(item.summary)item.summary={...item.summary,classification:cls,confidence:'high',intro:'Dokumentet er klassifisert som sluttprotokoll / avslutningsrapport prøvedrift.'};
+ else item.summary={classification:cls,confidence:'high',intro:'Dokumentet er klassifisert som sluttprotokoll / avslutningsrapport prøvedrift.',identifiers:{}};
+ if(item.suggestResult)item.suggestResult={...item.suggestResult,classification:cls,confidence:'high',suggestion:'Sluttprotokoll prøvedrift'};else item.suggestResult={classification:cls,confidence:'high',suggestion:'Sluttprotokoll prøvedrift'};
+ item.paSystem={...(item.paSystem||{}),code:'116',label:'Protokoller',score:100,level:'high',verified:true,source:'PA 0702 dokumentkategori + hoveddokument',basis:'116 i strukturert originalfilnavn og sluttprotokoll/prøvedrift i hoveddokumentet.',precision:'3-digit',systemUse:'document-category',alternatives:[]};
+ item.systemMotorV1={version:V5_VERSION,family:'116',label:'Protokoller',score:100,instances:[],instanceConflict:false,evidence:[{code:'116',kind:'PA0702-document-category',weight:150,excerpt:item.file?.name||'',label:'Sluttprotokoll prøvedrift'}],sourceKinds:['PA 0702 dokumentkategori','hoveddokument','originalfilnavn'],related:[],controlMention:false,allFamilies:[{family:'116',score:150}]};
+ item.systemAuthority={family:'116',kind:'document-category',source:'Hoveddokument + PA 0702',verified:true};item.r9SystemPlaceholder={code:'116',score:100,source:'PA 0702 dokumentkategori',reason:'Sluttprotokoll prøvedrift'};
+ // Stop drawing/function layers from reusing annex content as main-document identity.
+ item.drawingMotorV1=null;item.drawingMotorV2=null;item.systemDiagramV4=null;item.drawingRequirement='';item.finalFilenameDescription=item.description;
+ item.filenameMotorV1={version:V5_VERSION,family:'trial_closeout',description:item.description,source:'hoveddokument + originalfilnavn',quality:'høy',system:'116'};
+ item.pipelineV11={version:V5_VERSION,family:'trial_closeout',system:'116',instance:'',description:item.description,zone:'',source:'hoveddokument først'};
+ item.documentPackageV5={version:V5_VERSION,locked:true,category:'116',categoryLabel:'Protokoller',infoCode:'PK',originalInfoCode:meta.code||'',infoCorrection:(meta.code&&meta.code!=='PK')?meta.code+' → PK':'',date,frontDate,filenameDate,dateConfirmed,frontTitle:front?.title||'',frontSource:front?.source||'',frontOcrUsed:!!front?.ocrUsed,frontError:front?.error||'',annexPolicy:'Metadata etter Vedlegg behandles som sekundær for hoveddokumentets identitet.'};
+ item.warnings=(item.warnings||[]).filter(w=>!/(r[oø]mningsplan|evakueringsplan|172|funksjonsbeskrivelse|TFM.*116|systemkoden.*116|AT.*BE|informasjonstype.*AT.*BE)/i.test(String(w)));
+ if(meta.code==='AT'){item.documentPackageV5.infoCorrectionReason='Originalfilnavnet sier AT, men dokumentet og ST10004-kravet er protokoll. PK er derfor valgt som informasjonstype.';}
+ item._fdvuV1237Cache=null;item.v1237Rank=null;
+ return item.documentPackageV5;
+}
+async function v5Apply(item){if(!v5TrialCandidate(item))return null;const front=await v5FirstPageIdentity(item);return v5ApplyCore(item,front)}
+function v5Filename(item){
+ const p=item.documentPackageV5;if(!p?.locked)return '';
+ const ext=(item.file?.name?.match(/\.[^.]+$/)?.[0]||'.pdf').toLowerCase();const mode=document.querySelector('input[name="nameMode"]:checked')?.value||'ntnu';const desc='sluttprotokoll_provedrift'+(/signert/.test(v5Norm(item.originalMeta?.description||item.file?.name||''))?'_signert':'');
+ if(mode==='simple')return desc+ext;
+ const date=item.date||p.date||item.originalMeta?.date||'',building=item.building||item.originalMeta?.building||document.getElementById('building')?.value?.trim()||'',project=item.project||item.originalMeta?.project||document.getElementById('project')?.value?.trim()||'';
+ const parts=[date,building,'116','PK',project,desc].filter(Boolean).map(v=>typeof safeFilenamePart==='function'?safeFilenamePart(v):String(v).replace(/[^0-9A-Za-z._-]+/g,'_'));
+ return parts.join('_')+ext;
+}
+const v5PrevBuild=buildFilename;buildFilename=function(item){if(item?.documentPackageV5?.locked)return v5Filename(item);return v5PrevBuild(item)};
+const v5PrevAnalyze=analyzeOne;analyzeOne=async function(item){await v5PrevAnalyze(item);if(item?.status==='done'&&!item.ocrBlocked&&v5TrialCandidate(item)){await v5Apply(item);item.newName=buildFilename(item);}};
+// Quality/date layers: an explicit first-page Dato field is authoritative. Annex dates remain secondary.
+if(typeof fdvuV1235Quality==='function'){
+ const v5PrevQ=fdvuV1235Quality;fdvuV1235Quality=function(item){const q=v5PrevQ(item);const p=item?.documentPackageV5;if(!p?.locked)return q;
+  if(p.dateConfirmed){q.date=p.date;q.dateConfirmed=true;q.dateSource=p.frontSource||'hoveddokumentets forside';q.missing=(q.missing||[]).filter(x=>!/Dokumentdato/i.test(x));}
+  q.missing=(q.missing||[]).filter(x=>!/TFM.*116|TFM-kode mangler/i.test(x));
+  if(!q.missing.length&&!q.conflict)q.status=item.v123Reviewed?'Gjennomgått av kontrollør':'Klar for kontroll (ikke FDV-godkjent)';
+  return q;
+ };
+}
+if(typeof fdvuV1236DateAudit==='function'){
+ const v5PrevDA=fdvuV1236DateAudit;fdvuV1236DateAudit=function(item){const d=v5PrevDA(item),p=item?.documentPackageV5;if(!p?.locked||!p.dateConfirmed)return d;return {...d,status:'bekreftet',chosen:p.date,candidate:p.date,candidateRole:'header',candidateSource:p.frontSource||'hoveddokumentets forside',candidatePage:'1',candidateScore:100,verification:'Automatisk kryssbekreftet fra eksplisitt Dato-felt på hoveddokumentets forside'+(p.filenameDate===p.date?' og originalfilnavn':'')};};
+}
+function v5RenderOne(item){const p=item?.documentPackageV5;if(!p?.locked)return;const card=document.getElementById('row-'+item.id);if(!card)return;let box=card.querySelector(':scope > .fdvu-package-v5');if(!box){box=document.createElement('div');box.className='fdvu-package-v5';const anchor=card.querySelector(':scope > .ux-quickline')||card.querySelector(':scope > .doc-top');anchor?.insertAdjacentElement('afterend',box);}const corr=p.infoCorrection?` · Informasjonstype ${p.infoCorrection}`:'';const ds=p.dateConfirmed?`Dato ${p.date} bekreftet fra hoveddokumentets forside${p.filenameDate===p.date?' + originalfilnavn':''}`:`Dato ${p.date||'ikke funnet'} må kontrolleres`;box.innerHTML='<strong>Hoveddokument identifisert</strong><span>116 Protokoller · Sluttprotokoll prøvedrift · '+ds+corr+'</span>'+(p.frontError?'<em>Forside-OCR kunne ikke fullføres; kontroller dato.</em>':'');}
+function v5RenderAll(){for(const item of items||[])if(item.status==='done')v5RenderOne(item)}
+const v5PrevRender=renderTable;renderTable=function(...args){const z=v5PrevRender.apply(this,args);setTimeout(v5RenderAll,0);return z};
+if(typeof csvText==='function'&&typeof fdvuV118ParseDelimited==='function'){
+ const v5PrevCsv=csvText;csvText=function(){const table=fdvuV118ParseDelimited(v5PrevCsv());if(!table.length)return '\ufeff';const h=table[0],orig=h.indexOf('Originalfil');h.push('V5 hoveddokumentlås','V5 dokumentkategori','V5 informasjonstype korrigert','V5 forsidedato','V5 dato bekreftet','V5 datokilde','V5 vedleggsmetadata sekundær');for(let i=1;i<table.length;i++){const item=(items||[]).find(x=>x.file?.name===(orig>=0?table[i][orig]:'')),p=item?.documentPackageV5||{};table[i].push(p.locked?'Ja':'',p.category||'',p.infoCorrection||'',p.frontDate||'',p.dateConfirmed?'Ja':'Nei',p.frontSource||'',p.locked?'Ja':'')}return '\ufeff'+table.map(row=>row.map(csvEscape).join(';')).join('\r\n')};
+}
+try{for(const item of items.filter(x=>x.status==='done'&&!x.ocrBlocked&&v5TrialCandidate(x))){v5ApplyCore(item,item._v5FirstPageIdentity||{});item.newName=buildFilename(item)}}catch(e){console.warn('V5 init',e)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(v5RenderAll,0),{once:true});else setTimeout(v5RenderAll,0);
+window.FDVU_SLUTTPROTOKOLL_V5={version:V5_VERSION,isCandidate:v5TrialCandidate,apply:v5Apply,get:()=>items.filter(x=>x.documentPackageV5?.locked).map(x=>({file:x.file?.name,newName:x.newName,result:x.documentPackageV5}))};
 })();
 </script>
 
