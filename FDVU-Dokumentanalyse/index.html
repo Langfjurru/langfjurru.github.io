@@ -19,6 +19,14 @@
 .filename-source strong{color:#2e6249}
 .filename-source .origin-note{color:#7c661f}
 @media(max-width:720px){.filename-source{line-height:1.65}}
+/* V6.1 - tydelig generert filnavn også i kompakt normalvisning */
+.fdvu-v61-generated-block{margin-top:7px;border:2px solid #9fc7e2;background:#eef7fc;border-radius:9px;padding:8px 10px;box-shadow:0 3px 10px rgba(40,98,142,.08)}
+.fdvu-v61-generated-head{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:10px;font-weight:850;color:#315b7b;letter-spacing:.01em}
+.fdvu-v61-generated-badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:999px;background:#d8ebf7;color:#174d75;border:1px solid #b2d3e8;font-size:8px;font-weight:900;letter-spacing:.07em}
+.fdvu-v61-generated-block .ux-brief-name{font-size:13px!important;font-weight:800!important;line-height:1.45!important;color:#174d75!important;margin:0!important}
+.ux-doc-card.ux-reviewed .fdvu-v61-generated-block .ux-brief-name{color:#174d75!important}
+@media(max-width:700px){.fdvu-v61-generated-block{padding:8px 9px}.fdvu-v61-generated-block .ux-brief-name{font-size:12px!important}}
+
 
 /* v1.13 - Statsbygg PA instructions: separate compact, explainable building-part panel */
 .pa-panel{margin:0 16px 12px;border:1px solid #d2dfe3;background:#f7fafc;border-radius:10px;padding:11px 13px}
@@ -367,6 +375,28 @@ input.ux-date-filled{border-color:#7ebc9c;background:#f5fbf7;box-shadow:0 0 0 1p
 /* Fjern unødvendig luft som tidligere var reservert for utviklingsbannerne. */
 #fdvu-krav-summary{margin-top:14px!important;}
 </style>
+
+<style id="fdvu-v62-manual-filename-style">
+.fdvu-v61-generated-block{position:relative}
+.fdvu-v62-name-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.fdvu-v62-name-actions button{font-size:10px;padding:6px 9px;border-radius:7px}
+.fdvu-v62-edit-btn{background:#fff;border:1px solid #8fb9d5;color:#174d75;font-weight:750;cursor:pointer}
+.fdvu-v62-edit-btn:hover{background:#f6fbfe}
+.fdvu-v62-reset-btn{background:transparent;border:1px solid #c9d5dc;color:#5d6f79;cursor:pointer}
+.fdvu-v62-editor{margin-top:8px;padding-top:8px;border-top:1px solid #c9deeb}
+.fdvu-v62-editor-row{display:flex;gap:7px;align-items:stretch;flex-wrap:wrap}
+.fdvu-v62-editor input{flex:1 1 520px;min-width:220px;border:2px solid #5b93bb;border-radius:8px;padding:9px 10px;font:700 12px/1.4 Consolas,'SFMono-Regular',monospace;color:#123f5d;background:#fff}
+.fdvu-v62-editor input:focus{outline:3px solid rgba(79,134,184,.16);outline-offset:1px}
+.fdvu-v62-editor button{padding:8px 10px;border-radius:8px;font-size:10px;font-weight:750;cursor:pointer}
+.fdvu-v62-save{border:1px solid #276f97;background:#276f97;color:#fff}
+.fdvu-v62-cancel{border:1px solid #bdcbd3;background:#fff;color:#526670}
+.fdvu-v62-edit-note{margin-top:6px;font-size:9.5px;line-height:1.4;color:#617686}
+.fdvu-v62-manual-badge{display:inline-flex;align-items:center;padding:3px 6px;border-radius:999px;background:#fff2cf;color:#805b00;font-size:9px;font-weight:900;letter-spacing:.04em;border:1px solid #e3c56d;margin-left:5px}
+.fdvu-v61-generated-block.fdvu-v62-manual{border-color:#d3ab48;background:#fffaf0}
+.fdvu-v61-generated-block.fdvu-v62-manual .ux-brief-name{color:#684d08!important}
+@media(max-width:700px){.fdvu-v62-name-actions button{flex:1 1 auto}.fdvu-v62-editor-row{display:block}.fdvu-v62-editor input,.fdvu-v62-editor button{width:100%;margin:0 0 7px}}
+</style>
+
 </head><body><!-- Brukertest V1: ryddet brukerflate. Motorlogikk beholdt fra Systemmotor v1.1 / Filnavnmotor v1 / Tegningsmotor v2.3. -->
 <div class="app">
  <header class="header"><div class="brand">FDV</div><div class="header-copy"><h1>FDVU Dokumentanalyse 2.4</h1><p class="header-subtitle">Analyseverktøy for FDV-dokumentasjon</p><p class="header-description">Analyserer PDF- og DOCX-filer, identifiserer dokumenttype og teknisk system, og foreslår standardiserte filnavn for FDV-dokumentasjon.</p></div><div class="local">🔒 Lokal dokumentanalyse · ingen dokumentopplasting</div></header><div class="security-notice" id="securityNotice"><strong>🔒 Lokal og øktbasert dokumentbehandling</strong>Filer lastes ikke opp til ekstern server. Dokumentinnholdet er kun tilgjengelig i nettleseren i den aktive arbeidsøkten og slettes fra verktøyets arbeidsøkt når arbeidsøkten tømmes eller siden lukkes.<span class="security-sub">Ingen dokumentdata sendes til ekstern server. Verktøyet kan ved behov laste programbiblioteker og OCR-språkdata fra godkjente CDN-er; disse forespørslene inneholder ikke dokumentfilene eller dokumentteksten.</span></div>
@@ -11638,6 +11668,182 @@ if(typeof csvText==='function'&&typeof fdvuV118ParseDelimited==='function'){
 try{for(const item of items.filter(x=>x.status==='done'&&!x.ocrBlocked&&v5TrialCandidate(x))){v5ApplyCore(item,item._v5FirstPageIdentity||{});item.newName=buildFilename(item)}}catch(e){console.warn('V5 init',e)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(v5RenderAll,0),{once:true});else setTimeout(v5RenderAll,0);
 window.FDVU_SLUTTPROTOKOLL_V5={version:V5_VERSION,isCandidate:v5TrialCandidate,apply:v5Apply,get:()=>items.filter(x=>x.documentPackageV5?.locked).map(x=>({file:x.file?.name,newName:x.newName,result:x.documentPackageV5}))};
+})();
+</script>
+
+
+
+<style>
+/* Brukertest V6 - tydeligere generert filnavn */
+.filename.fdvu-v6-generated{border:2px solid #4f86b8;background:#f2f8fd;box-shadow:0 4px 14px rgba(40,98,142,.10);padding:10px 11px;position:relative}
+.filename.fdvu-v6-generated span{font-size:13px;font-weight:800;color:#174d75;line-height:1.45}
+.fdvu-v6-generated-label{display:flex!important;align-items:center;gap:7px;color:#315b7b!important;font-size:11px!important;margin-top:11px!important;margin-bottom:6px!important}
+.fdvu-v6-generated-badge{display:inline-flex;align-items:center;padding:3px 6px;border-radius:999px;background:#dcecf8;color:#174d75;font-size:9px;font-weight:900;letter-spacing:.06em;border:1px solid #b9d5e9}
+.fdvu-v6-generated-note{font-size:10px;color:#617686;margin-top:4px;line-height:1.35}
+.fdvu-v6-drawing-date{margin:7px 0 0;padding:7px 9px;border-left:3px solid #4f86b8;background:#f7fafc;border-radius:5px;font-size:10px;color:#536978;line-height:1.4}
+.fdvu-v6-drawing-date strong{color:#234e6d}
+</style>
+<script>
+/* Brukertest V6 - revisjonsdato, spesifikk bygningsdel foran 163, tegningsidentitetslås og tydelig filnavn. */
+(function(){
+'use strict';
+const V6_VERSION='6.0.0';
+function v6Norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/æ/g,'ae').replace(/ø/g,'o').replace(/å/g,'a').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
+function v6Slug(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/æ/gi,'ae').replace(/ø/gi,'o').replace(/å/gi,'a').replace(/[^0-9A-Za-z]+/g,'_').replace(/^_+|_+$/g,'').toLowerCase()}
+function v6Date(raw){const s=String(raw||'').trim();let m=s.match(/\b(\d{1,2})[.\/-](\d{1,2})[.\/-]((?:19|20)\d{2})\b/);if(m)return m[3]+m[2].padStart(2,'0')+m[1].padStart(2,'0');m=s.match(/\b((?:19|20)\d{2})[.\/-]?(\d{2})[.\/-]?(\d{2})\b/);return m?m[1]+m[2]+m[3]:''}
+function v6DateDisplay(v){return /^\d{8}$/.test(String(v||''))?String(v).slice(6,8)+'.'+String(v).slice(4,6)+'.'+String(v).slice(0,4):String(v||'')}
+function v6Lines(item){return String(item?.text||'').split(/[\r\n]+/).map(x=>String(x||'').replace(/\s+/g,' ').trim()).filter(Boolean)}
+function v6DrawingMarkers(item){const t=v6Norm((item?.text||'')+' '+(item?.file?.name||''));let score=0;if(/\bsom bygget\b/.test(t))score+=2;if(/\bmal\s*1\s*[:/]\s*\d+\b|\bmalestokk\b/.test(t))score+=2;if(/\brev\s*dato\b|\brevisjonen gjelder\b|\barbeidstegning\b/.test(t))score+=2;if(/\ba\d{2}[\s._-]?\d{2}\b/.test(t))score+=2;if(item?.drawingMotorV2||item?.drawingMotorV1||item?.infoCode==='TE')score+=3;return score}
+function v6StrongTitle(item){const text=String(item?.text||'');const n=v6Norm(text);const rules=[
+ [/\bskiltplan(?:\s+\d+)?\b/,'Skiltplan'],
+ [/\bfoto\s+nytt\s+utstyr\s+til\s+d[oø]rer\b/,'Foto nytt utstyr til dører'],
+ [/\barbeider\s+p[aå]\s+d[oø]rblad\b/,'Arbeider på dørblad'],
+ [/\bnye\s+d[oø]rer\b/,'Nye dører'],
+ [/\br[oø]yktettelister?\b/,'Røyktettelister'],
+ [/\bfargeplan(?:\s+\d+\s*etasje)?\b/,'Fargeplan'],
+ [/\bplexi?glass\s+foran\s+fargeunders[oø]kelser\b/,'Plexiglass foran fargeundersøkelser']
+ ];
+ for(const [re,label] of rules)if(re.test(text)||re.test(n))return label;
+ const d=item?.drawingMotorV2?.title||item?.drawingMotorV1?.title||'';return d&&!/teknisk tegning|som bygget detaljtegning/i.test(d)?d:'';
+}
+function v6LegacyDrawingNumber(item){const full=item?.drawingNumberST10003?.number||item?.drawingNumberFull||'';if(full)return full;const lines=v6Lines(item),name=String(item?.file?.name||''),re=/\b([A-Z]\d{2})[\s._-]?(\d{2})\b/i;
+ // The source filename is stronger than cross-references printed inside the sheet.
+ let m=name.match(re);if(m)return m[1].toUpperCase()+'-'+m[2];
+ // Then prefer the title/revision block, normally located at the end of extracted text.
+ for(let i=lines.length-1;i>=Math.max(0,lines.length-55);i--){const line=lines[i],hit=line.match(re);if(!hit)continue;const ctx=v6Norm(lines.slice(Math.max(0,i-3),Math.min(lines.length,i+4)).join(' '));if(/\bsom bygget\b|\brev\b|\bmal\b|\bntnu eiendom\b|\beggen arkitekter\b/.test(ctx))return hit[1].toUpperCase()+'-'+hit[2];}
+ // Last resort: a single short drawing number found near the end of the sheet.
+ for(let i=lines.length-1;i>=Math.max(0,lines.length-35);i--){const hit=lines[i].match(re);if(hit)return hit[1].toUpperCase()+'-'+hit[2];}
+ return ''}
+function v6RevisionDate(item){if(v6DrawingMarkers(item)<3)return null;const lines=v6Lines(item),hits=[];const datePattern=/\b(?:\d{1,2}[.\/-]\d{1,2}[.\/-](?:19|20)\d{2}|(?:19|20)\d{2}[.\/-]?\d{2}[.\/-]?\d{2})\b/;const dateRe=new RegExp(datePattern.source,'g');
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i],own=v6Norm(line),prev=lines[i-1]||'',next=lines[i+1]||'';for(const m of line.matchAll(dateRe)){
+   const value=v6Date(m[0]);if(!value)continue;let score=0,role='';
+   if(/\bsom bygget\b/.test(own)){score=100;role='SOM BYGGET-revisjon'}
+   else if(/\brevisjonen gjelder\b|\brev\s+dato\b|\brevisjon\b/.test(own)){score=92;role='revisjonsliste'}
+   else if(/\barbeidstegning\b/.test(own)){score=82;role='arbeidstegning-revisjon'}
+   else {
+    // In many title blocks "SOM BYGGET" and its date are split over two text lines.
+    // Only inherit that status when the adjacent status line does NOT already contain another date.
+    const adjacent=[prev,next].find(x=>/\bsom bygget\b/.test(v6Norm(x))&&!datePattern.test(x));
+    if(adjacent){score=96;role='SOM BYGGET-dato i tilstøtende tittelfelt'}
+   }
+   if(score){const context=[prev,line,next].filter(Boolean).join(' ');hits.push({value,score,role,line:i+1,evidence:context.slice(0,220)});}
+  }
+ }
+ if(!hits.length)return null;
+ // The user-facing rule is chronological: newest listed revision date wins.
+ hits.sort((a,b)=>Number(b.value)-Number(a.value)||b.score-a.score);
+ const chosen=hits[0],unique=[...new Set(hits.map(x=>x.value))];
+ return {...chosen,all:unique,source:'Tegningshode/revisjonsliste - nyeste revisjonsdato',version:V6_VERSION};
+}
+function v6SystemDecision(item,title){const t=v6Norm((title||'')+' '+String(item?.text||''));
+ if(/\bskiltplan\b/.test(t))return {code:'277',label:'Skilt og tavler',score:99,reason:'Tegningstittelen identifiserer en skiltplan. 277 er den spesifikke bygningsdelen og brukes i filnavnet foran generell 163.'};
+ if(/\b(?:nye dorer|arbeider pa dorblad|royktettelister?|foto nytt utstyr til dorer|dorblad|dorkarm)\b/.test(t))return {code:'244',label:'Vinduer, dører, foldevegger',score:98,reason:'Tegningen gjelder dør/dørblad/karm eller dørutstyr. Spesifikk bygningsdel 244 prioriteres foran generell tegningskategori 163.'};
+ return null;
+}
+function v6DrawingTypeLock(item,title){if(v6DrawingMarkers(item)<5||!title)return false;const n=v6Norm(title);if(/\bnye dorer\b|\bskiltplan\b|\bfargeplan\b|\barbeider pa dorblad\b|\broyktettelister?\b|\bplexi?glass foran fargeundersokelser\b/.test(n))return true;return false}
+function v6Apply(item){if(!item||item.status!=='done'||item.ocrBlocked||item.documentPackageV5?.locked)return null;const title=v6StrongTitle(item),drawing=v6DrawingMarkers(item)>=3||!!title;if(!drawing)return null;const date=v6RevisionDate(item),system=v6SystemDecision(item,title),lock=v6DrawingTypeLock(item,title),drawingNo=v6LegacyDrawingNumber(item);
+ const p={version:V6_VERSION,title:title||item.description||item.docType||'Tegning',date,system,drawingNo,lockedType:lock};
+ if(lock){item.infoCode='TE';item.infoLabel='Tegning';if(/nye d[oø]rer/i.test(p.title))item.docType='Dørtegning';else if(/skiltplan/i.test(p.title))item.docType='Skiltplan';else if(/fargeplan/i.test(p.title))item.docType='Fargeplan';else item.docType=item.docType&&item.docType!=='Funksjonsbeskrivelse'?item.docType:'Som bygget detaljtegning';item.description=p.title;item.finalFilenameDescription=p.title;item.descriptionSource='tegningshode/tittel - identitetslås';
+  if(item.summary?.classification)item.summary.classification={key:'drawing',label:item.docType,confidence:'high',reason:'Tegningshode og revisjonsfelt identifiserer dokumentet som tegning. Referanser til andre dokumenter overstyrer ikke tegningstypen.'};
+ }
+ if(system){p.filenameCode=system.code;item.tfm=system.code;item.systemName=system.label;item.paAutoCode=true;item.paSystem={...(item.paSystem||{}),code:system.code,label:system.label,score:system.score,level:'high',verified:false,source:'Tegningsinnhold - spesifikk bygningsdel',basis:system.reason,precision:'3-digit',systemUse:'building-part'};if(item.drawingMotorV2)item.drawingMotorV2={...item.drawingMotorV2,systemCode:system.code,filenameCode:system.code,systemStrength:system.score,filenameCodeSource:'V6 spesifikk bygningsdel',finalFilenameDescription:p.title};if(item.drawingMotorV1)item.drawingMotorV1={...item.drawingMotorV1,systemCode:system.code,systemStrength:system.score};if(item.docIdentity?.fields)item.docIdentity.fields.technical={value:system.code,source:'Tegningsinnhold - spesifikk bygningsdel',score:system.score,verified:false,conflict:false,basis:system.reason};}
+ if(date){p.filenameDate=date.value;item.date=date.value;item.v6DateProposal=date;if(item.docIdentity?.fields)item.docIdentity.fields.date={value:date.value,source:date.source,score:date.score,confidence:date.score,basis:'Nyeste revisjonsdato i revisjonslisten: '+v6DateDisplay(date.value)+(date.all.length>1?' · øvrige revisjonsdatoer: '+date.all.slice(1).map(v6DateDisplay).join(', '):''),verified:true,status:'documented'};}
+ item.drawingAnalysisV6=p;item._fdvuV1237Cache=null;item.v1237Rank=null;
+ item.warnings=(item.warnings||[]).filter(w=>!(lock&&/funksjonsbeskrivelse/i.test(String(w))));
+ return p;
+}
+function v6Build(item,p,old){const ext=(item.file?.name?.match(/\.[^.]+$/)?.[0]||'.pdf').toLowerCase();const mode=document.querySelector('input[name="nameMode"]:checked')?.value||'ntnu';const desc=v6Slug(p.title||item.description||'tegning');if(mode==='simple')return [p.drawingNo,desc].filter(Boolean).join('_')+ext;
+ const date=p.filenameDate||item.date||'',building=item.docIdentity?.fields?.building?.value||item.building||item.originalMeta?.building||document.getElementById('building')?.value?.trim()||'';let code=p.filenameCode||item.tfm||item.drawingMotorV2?.filenameCode||item.drawingMotorV2?.systemCode||'';if(!code){const m=String(old||'').match(/(?:^|_)(\d{3})(?=_TE_)/);code=m?.[1]||''}const project=item.project||item.originalMeta?.project||document.getElementById('project')?.value?.trim()||'';const parts=[date,building,code,'TE',p.drawingNo,project,desc].filter(v=>String(v||'').trim()).map(v=>typeof safeFilenamePart==='function'?safeFilenamePart(v):String(v).replace(/[^0-9A-Za-z._-]+/g,'_'));return parts.join('_')+ext;}
+const v6PrevBuild=buildFilename;buildFilename=function(item){const old=v6PrevBuild(item);const p=item?.drawingAnalysisV6;if(!p||item?.documentPackageV5?.locked)return old;return v6Build(item,p,old)};
+const v6PrevAnalyze=analyzeOne;analyzeOne=async function(item){await v6PrevAnalyze(item);if(item?.status==='done'&&!item.ocrBlocked){v6Apply(item);item.newName=buildFilename(item)}};
+function v6Esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function v6DecorateFilename(item){const card=document.getElementById('row-'+item.id);if(!card)return;
+ const briefName=card.querySelector('.ux-brief-name');if(briefName&&!briefName.closest('.fdvu-v61-generated-block')){const wrap=document.createElement('div');wrap.className='fdvu-v61-generated-block';const head=document.createElement('div');head.className='fdvu-v61-generated-head';head.innerHTML='Foreslått nytt filnavn <span class="fdvu-v61-generated-badge">GENERERT</span>';briefName.parentNode.insertBefore(wrap,briefName);wrap.appendChild(head);wrap.appendChild(briefName);}
+ const filename=card.querySelector('.filename');if(filename){filename.classList.add('fdvu-v6-generated');const section=filename.closest('section');let label=[...(section?.querySelectorAll('label')||[])].find(x=>/Foreslått filnavn|Foreslått nytt filnavn|Nytt filnavn/i.test(x.textContent));if(label){label.classList.add('fdvu-v6-generated-label');label.innerHTML='Foreslått nytt filnavn <span class="fdvu-v6-generated-badge">GENERERT</span>';}let note=filename.nextElementSibling;if(!note||!note.classList?.contains('fdvu-v6-generated-note')){note=document.createElement('div');note.className='fdvu-v6-generated-note';filename.insertAdjacentElement('afterend',note)}note.textContent='Verktøyets forslag basert på dokumentinnhold og identifiserte metadata. Kontroller før endelig arkivering.';}
+ const p=item.drawingAnalysisV6;if(p?.date){let box=card.querySelector(':scope .fdvu-v6-drawing-date');if(!box){box=document.createElement('div');box.className='fdvu-v6-drawing-date';const anchor=card.querySelector('.filename');anchor?.insertAdjacentElement('afterend',box)}box.innerHTML='<strong>Foreslått dokumentdato: '+v6Esc(v6DateDisplay(p.date.value))+'</strong> · '+v6Esc(p.date.source)+(p.date.all.length>1?' · Nyeste av '+p.date.all.length+' revisjonsdatoer':'');}
+}
+function v6RenderAll(){for(const item of items||[])if(item.status==='done')v6DecorateFilename(item)}
+const v6PrevRender=renderTable;renderTable=function(...args){const z=v6PrevRender.apply(this,args);setTimeout(v6RenderAll,0);return z};
+if(typeof csvText==='function'&&typeof fdvuV118ParseDelimited==='function'){
+ const v6PrevCsv=csvText;csvText=function(){const table=fdvuV118ParseDelimited(v6PrevCsv());if(!table.length)return '\ufeff';const h=table[0],orig=h.indexOf('Originalfil');h.push('V6 tegningstittel','V6 spesifikk filnavnkode','V6 systembegrunnelse','V6 nyeste revisjonsdato','V6 revisjonsdato kilde','V6 alle revisjonsdatoer','V6 tegningsidentitetslås','V6 legacy tegningsnummer');for(let i=1;i<table.length;i++){const item=(items||[]).find(x=>x.file?.name===(orig>=0?table[i][orig]:'')),p=item?.drawingAnalysisV6||{};table[i].push(p.title||'',p.filenameCode||p.system?.code||'',p.system?.reason||'',p.date?.value||'',p.date?.source||'',(p.date?.all||[]).join(' | '),p.lockedType?'Ja':'Nei',p.drawingNo||'')}return '\ufeff'+table.map(row=>row.map(csvEscape).join(';')).join('\r\n')};
+}
+try{for(const item of items.filter(x=>x.status==='done'&&!x.ocrBlocked&&!x.documentPackageV5?.locked)){v6Apply(item);item.newName=buildFilename(item)}}catch(e){console.warn('V6 init',e)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(v6RenderAll,0),{once:true});else setTimeout(v6RenderAll,0);
+window.FDVU_BRUKERTEST_V6={version:V6_VERSION,apply:v6Apply,revisionDate:v6RevisionDate,systemDecision:v6SystemDecision,get:()=>items.filter(x=>x.drawingAnalysisV6).map(x=>({file:x.file?.name,newName:x.newName,result:x.drawingAnalysisV6}))};
+})();
+</script>
+
+
+<script id="fdvu-v62-manual-filename-script">
+/* Brukertest V6.2 - manuell korreksjon av foreslått filnavn. */
+(function(){
+'use strict';
+const V62_VERSION='6.2.0';
+const v62PrevBuild=buildFilename;
+buildFilename=function(item){
+ const auto=v62PrevBuild(item);
+ if(item) item.v62AutoGeneratedName=auto;
+ return item?.manualFilenameOverride || auto;
+};
+function v62Esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function v62Filename(raw,item){
+ let v=String(raw||'').trim();
+ if(!v) return {ok:false,error:'Filnavnet kan ikke være tomt.'};
+ if(/[\\/:*?"<>|]/.test(v)) return {ok:false,error:'Filnavnet inneholder tegn som ikke kan brukes: \\ / : * ? " < > |'};
+ v=v.replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^\.+/,'').replace(/[. ]+$/,'');
+ if(!/\.pdf$/i.test(v)) v+='.pdf';
+ if(v.length>220) return {ok:false,error:'Filnavnet er for langt. Forkort beskrivelsen før lagring.'};
+ return {ok:true,value:v};
+}
+window.fdvuV62EditFilename=function(id){
+ const item=items.find(x=>x.id===id);if(!item)return;
+ item.v62Editing=true;item.v123Reviewed=null;renderTable();
+ setTimeout(()=>{const el=document.querySelector('[data-v62-name="'+CSS.escape(id)+'"]');if(el){el.focus();el.select();}},0);
+};
+window.fdvuV62CancelFilename=function(id){const item=items.find(x=>x.id===id);if(!item)return;item.v62Editing=false;renderTable();};
+window.fdvuV62SaveFilename=function(id){
+ const item=items.find(x=>x.id===id);if(!item)return;
+ const input=document.querySelector('[data-v62-name="'+CSS.escape(id)+'"]');
+ const val=v62Filename(input?.value,item);if(!val.ok)return toast(val.error,'warn');
+ item.manualFilenameOverride=val.value;
+ item.filenameManuallyEdited=true;
+ item.filenameManualAt=new Date().toISOString();
+ item.v62Editing=false;
+ item.v123Reviewed=null;
+ item.newName=buildFilename(item);
+ renderTable();
+ toast('Filnavnet er manuelt korrigert og brukes ved nedlasting, ZIP og CSV.','ok');
+};
+window.fdvuV62ResetFilename=function(id){
+ const item=items.find(x=>x.id===id);if(!item)return;
+ item.manualFilenameOverride='';item.filenameManuallyEdited=false;item.filenameManualAt='';item.v62Editing=false;item.v123Reviewed=null;
+ item.newName=buildFilename(item);renderTable();toast('Automatisk filnavnforslag er gjenopprettet.','ok');
+};
+function v62Decorate(item){
+ const card=document.getElementById('row-'+item.id);if(!card)return;
+ const block=card.querySelector('.fdvu-v61-generated-block');if(!block)return;
+ block.classList.toggle('fdvu-v62-manual',!!item.manualFilenameOverride);
+ const head=block.querySelector('.fdvu-v61-generated-head');
+ if(head){head.innerHTML=item.manualFilenameOverride?'Foreslått nytt filnavn <span class="fdvu-v62-manual-badge">MANUELT KORRIGERT</span>':'Foreslått nytt filnavn <span class="fdvu-v61-generated-badge">GENERERT</span>';}
+ let actions=block.querySelector(':scope > .fdvu-v62-name-actions');
+ if(!actions){actions=document.createElement('div');actions.className='fdvu-v62-name-actions';block.appendChild(actions);}
+ actions.innerHTML='<button type="button" class="fdvu-v62-edit-btn" onclick="fdvuV62EditFilename(\''+String(item.id).replace(/'/g,"\\'")+'\')">✎ Rediger filnavn</button>'+(item.manualFilenameOverride?'<button type="button" class="fdvu-v62-reset-btn" onclick="fdvuV62ResetFilename(\''+String(item.id).replace(/'/g,"\\'")+'\')">Tilbakestill til automatisk forslag</button>':'');
+ let editor=block.querySelector(':scope > .fdvu-v62-editor');
+ if(item.v62Editing){
+  if(!editor){editor=document.createElement('div');editor.className='fdvu-v62-editor';block.appendChild(editor);}
+  const current=item.manualFilenameOverride||item.newName||item.v62AutoGeneratedName||'';
+  editor.innerHTML='<div class="fdvu-v62-editor-row"><input data-v62-name="'+v62Esc(item.id)+'" type="text" value="'+v62Esc(current)+'" aria-label="Rediger foreslått filnavn" spellcheck="false"><button type="button" class="fdvu-v62-save" onclick="fdvuV62SaveFilename(\''+String(item.id).replace(/'/g,"\\'")+'\')">Lagre korrigering</button><button type="button" class="fdvu-v62-cancel" onclick="fdvuV62CancelFilename(\''+String(item.id).replace(/'/g,"\\'")+'\')">Avbryt</button></div><div class="fdvu-v62-edit-note">Rediger hele filnavnet. <strong>.pdf</strong> legges til automatisk hvis det mangler. Manuell korreksjon beholdes til du velger «Tilbakestill til automatisk forslag».</div>';
+ }else if(editor){editor.remove();}
+}
+function v62RenderAll(){for(const item of items||[])if(item.status==='done')v62Decorate(item)}
+const v62PrevRender=renderTable;renderTable=function(...args){const z=v62PrevRender.apply(this,args);setTimeout(v62RenderAll,0);return z};
+if(typeof csvText==='function'&&typeof fdvuV118ParseDelimited==='function'){
+ const v62PrevCsv=csvText;csvText=function(){const table=fdvuV118ParseDelimited(v62PrevCsv());if(!table.length)return '\ufeff';const h=table[0],orig=h.indexOf('Originalfil');h.push('Filnavn manuelt korrigert','Automatisk filnavnforslag','Manuell filnavnkorreksjon tidspunkt');for(let i=1;i<table.length;i++){const item=(items||[]).find(x=>x.file?.name===(orig>=0?table[i][orig]:''));table[i].push(item?.manualFilenameOverride?'Ja':'Nei',item?.v62AutoGeneratedName||'',item?.filenameManualAt||'')}return '\ufeff'+table.map(row=>row.map(csvEscape).join(';')).join('\r\n')};
+}
+try{for(const item of items.filter(x=>x.status==='done')){item.v62AutoGeneratedName=v62PrevBuild(item);if(item.manualFilenameOverride)item.newName=buildFilename(item)}}catch(e){console.warn('V6.2 init',e)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(v62RenderAll,0),{once:true});else setTimeout(v62RenderAll,0);
+window.FDVU_BRUKERTEST_V62={version:V62_VERSION,get:()=>items.map(x=>({file:x.file?.name,newName:x.newName,auto:x.v62AutoGeneratedName,manual:x.manualFilenameOverride||''}))};
 })();
 </script>
 
