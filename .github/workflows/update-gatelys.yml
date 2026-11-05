@@ -1,114 +1,68 @@
-name: Oppdater kartlagte gatelys (OSM til GeoJSON)
+name: Trondheim 3D v2.57 - Ytelse (gatelys av)
 
+# Deliberately no cron: the earlier streetlamp update is retired.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 3 * * 0' # Sundays at 03:17 UTC
   push:
     paths:
       - '.github/workflows/update-gatelys.yml'
-      - 'trondheim-3d/scripts/export_lamps.py'
-      - 'trondheim-3d/scripts/apply_v255.py'
-      - 'trondheim-3d/scripts/apply_v256.py'
-      - 'trondheim-3d/scripts/lamp_patch_v255.js'
+      - 'trondheim-3d/scripts/apply_v257.py'
 
 permissions:
   contents: write
 
-# Avoid simultaneous runs of THIS streetlight updater. Other repository
-# operations may still commit to main while we are downloading Overpass data.
 concurrency:
   group: trondheim-streetlights-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  build-geojson:
+  optimize-streetlights:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
-    defaults:
-      run:
-        working-directory: trondheim-3d
+    timeout-minutes: 5
     steps:
-      - name: Checkout repository
+      - name: Checkout entire repository
         uses: actions/checkout@v4
         with:
           persist-credentials: true
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Apply v2.55 streetlight patch safely
+      - name: Verify target and install v2.57
         shell: bash
         run: |
           set -euo pipefail
-          test -f index.html
-          test -f scripts/apply_v255.py
-          test -f scripts/lamp_patch_v255.js
-          # A previous build may already have installed the new lighting engine.
-          if grep -q 'LAMP_REGISTRY_URL' index.html; then
-            echo 'v2.55 streetlight engine already present; keeping existing HTML.'
-          else
-            # The visible version may be v2.54 while app-version metadata is stale.
-            # Check the actual page title or visible release label; do not rely on <meta>.
-            python - <<'PY'
-          from pathlib import Path
-          import re
-          import sys
-          s = Path('index.html').read_text(encoding='utf-8')
-          title = re.search(r'<title\b[^>]*>(.*?)</title\s*>', s, re.I | re.S)
-          visible = re.search(r'<[^>]*\bclass=["\'][^"\']*\brelease-tag\b[^"\']*["\'][^>]*>(.*?)</[^>]+>', s, re.I | re.S)
-          fragments = [re.sub(r'<[^>]+>', '', m.group(1)).strip() for m in (title, visible) if m]
-          meta = re.search(r'<meta\s+name=["\']app-version["\']\s+content=["\']([^"\']+)', s, re.I)
-          print('Title/release label:', fragments)
-          print('app-version metadata:', meta.group(1) if meta else '(not set)')
-          if not any(re.search(r'\bv2\.54\b', f, re.I) for f in fragments):
-              sys.exit('STOP: Page title/release label does not confirm v2.54. No files modified.')
-          print('Visible v2.54 confirmed. Checking exact streetlight-module structure.')
-          PY
-            # apply_v255.py has independent strict structural checks and writes
-            # index.html only after the full in-memory transformation succeeds.
-            python scripts/apply_v255.py index.html index.html
-            echo 'v2.55 streetlight patch completed.'
+          test -f trondheim-3d/index.html
+          test -f trondheim-3d/scripts/apply_v257.py
+          python3 trondheim-3d/scripts/apply_v257.py trondheim-3d/index.html
+          grep -q 'V257_STREETLIGHTS_OFF_PERF' trondheim-3d/index.html
+          if grep -q 'function v255GenerateLamps(){' trondheim-3d/index.html; then
+            echo '::error::Heavy roadside streetlights still found. Aborting.'
+            exit 1
           fi
-      - name: Install v2.56 building-aware placement (idempotent)
+          echo 'Verified: dynamic roadside streetlight engine is gone.'
+      - name: Commit only Trondheim 3D HTML with safe retries
         shell: bash
         run: |
           set -euo pipefail
-          test -f scripts/apply_v256.py
-          python scripts/apply_v256.py index.html index.html
-      - name: Download mapped OSM street lamps into GeoJSON
-        run: python scripts/export_lamps.py
-      - name: Commit Trondheim 3D changes with safe retry
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Only files under trondheim-3d are included in this commit.
-          git add -- index.html data/trondheim-gatelys.geojson
+          git add -- trondheim-3d/index.html
           if git diff --cached --quiet; then
-            echo 'No changes to commit.'
+            echo 'No changes; performance optimization already installed.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Update Trondheim 3D mapped streetlights and building-aware placements'
-
-          # The repository may advance while the Overpass export is running.
-          # Rebase on the latest remote branch, never force-push or overwrite it.
+          git commit -m 'Trondheim 3D v2.57: disable heavy roadside streetlights'
           branch="${GITHUB_REF_NAME:-main}"
           for attempt in 1 2 3 4; do
-            echo "Sync/push attempt ${attempt}/4 for ${branch}"
-            git fetch --no-tags origin "${branch}"
+            echo "Synchronizing main, attempt ${attempt}/4"
+            git fetch --no-tags origin "$branch"
             if ! git rebase "origin/${branch}"; then
               git rebase --abort || true
-              echo '::error::The remote branch changed the same lines. Manual review is needed; no remote files were overwritten.'
+              echo '::error::Conflict with recent main changes. No remote files overwritten.'
               exit 1
             fi
             if git push origin "HEAD:refs/heads/${branch}"; then
-              echo 'GeoJSON and the Trondheim 3D lighting patch were committed successfully.'
+              echo 'Success: v2.57 installed in Trondheim 3D only.'
               exit 0
             fi
-            echo 'The remote branch changed again during upload. Retrying safely.'
             sleep "$((attempt * 3))"
           done
-          echo '::error::GitHub continued to reject the update after four safe attempts. Existing remote code was not overwritten.'
+          echo '::error::GitHub rejected the commit after four safe attempts.'
           exit 1
