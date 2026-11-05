@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "description": "Lyspunkt i Trondheim. Skal fylles av GitHub Actions fra OSM highway=street_lamp; beregnede lyspunkter holdes atskilt i klienten.",
+    "status": "venter_pa_osm_import",
+    "updated_at": null,
+    "source": "OpenStreetMap",
+    "license": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "bbox_wgs84": [10.25, 63.38, 10.56, 63.50]
+  },
+  "features": []
+}
