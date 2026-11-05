@@ -1,30 +1,4 @@
-name: Oppdater kartlagte gatelys (OSM til GeoJSON)
-
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '17 3 * * 0' # Sundays at 03:17 UTC
-  push:
-    paths:
-      - '.github/workflows/update-gatelys.yml'
-      - 'trondheim-3d/scripts/export_lamps.py'
-      - 'trondheim-3d/scripts/apply_v255.py'
-      - 'trondheim-3d/scripts/lamp_patch_v255.js'
-
-permissions:
-  contents: write
-
-jobs:
-  build-geojson:
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    defaults:
-      run:
-        working-directory: trondheim-3d
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
+with:
           persist-credentials: true
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -65,14 +39,37 @@ jobs:
           fi
       - name: Download mapped OSM street lamps into GeoJSON
         run: python scripts/export_lamps.py
-      - name: Commit only Trondheim 3D changes
+      - name: Commit Trondheim 3D changes with safe retry
         shell: bash
         run: |
           set -euo pipefail
-          git add index.html data/trondheim-gatelys.geojson
-          if ! git diff --cached --quiet; then
-            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Update Trondheim 3D mapped streetlights'
-            git push
-          else
+          # Only files under trondheim-3d are included in this commit.
+          git add -- index.html data/trondheim-gatelys.geojson
+          if git diff --cached --quiet; then
             echo 'No changes to commit.'
+            exit 0
           fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Update Trondheim 3D mapped streetlights'
+
+          # The repository may advance while the Overpass export is running.
+          # Rebase on the latest remote branch, never force-push or overwrite it.
+          branch="${GITHUB_REF_NAME:-main}"
+          for attempt in 1 2 3 4; do
+            echo "Sync/push attempt ${attempt}/4 for ${branch}"
+            git fetch --no-tags origin "${branch}"
+            if ! git rebase "origin/${branch}"; then
+              git rebase --abort || true
+              echo '::error::The remote branch changed the same lines. Manual review is needed; no remote files were overwritten.'
+              exit 1
+            fi
+            if git push origin "HEAD:refs/heads/${branch}"; then
+              echo 'GeoJSON and the Trondheim 3D lighting patch were committed successfully.'
+              exit 0
+            fi
+            echo 'The remote branch changed again during upload. Retrying safely.'
+            sleep "$((attempt * 3))"
+          done
+          echo '::error::GitHub continued to reject the update after four safe attempts. Existing remote code was not overwritten.'
+          exit 1
