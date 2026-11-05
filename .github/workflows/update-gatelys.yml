@@ -1,0 +1,58 @@
+name: Oppdater kartlagte gatelys (OSM til GeoJSON)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 0'  # Sundays at 03:17 UTC
+  push:
+    paths:
+      - '.github/workflows/update-gatelys.yml'
+      - 'trondheim-3d/scripts/export_lamps.py'
+      - 'trondheim-3d/scripts/apply_v255.py'
+      - 'trondheim-3d/scripts/lamp_patch_v255.js'
+
+permissions:
+  contents: write
+
+jobs:
+  build-geojson:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: trondheim-3d
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Patch only Trondheim 3D v2.54 to v2.55
+        shell: bash
+        run: |
+          test -f index.html
+          test -f scripts/apply_v255.py
+          test -f scripts/lamp_patch_v255.js
+          if grep -q 'LAMP_REGISTRY_URL' index.html; then
+            echo 'Trondheim 3D v2.55 streetlight module already installed.'
+          elif grep -q 'name="app-version" content="2.54"' index.html; then
+            python scripts/apply_v255.py index.html index.html
+          else
+            echo 'Unknown Trondheim 3D version: refusing automatic modification.'
+            exit 1
+          fi
+      - name: Download mapped OSM street lamps into GeoJSON
+        run: python scripts/export_lamps.py
+      - name: Commit only Trondheim 3D changes
+        shell: bash
+        run: |
+          git add index.html data/trondheim-gatelys.geojson
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Update Trondheim 3D mapped streetlights'
+            git push
+          else
+            echo 'No changes to commit.'
+          fi
