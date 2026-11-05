@@ -9,6 +9,7 @@ on:
       - '.github/workflows/update-gatelys.yml'
       - 'trondheim-3d/scripts/export_lamps.py'
       - 'trondheim-3d/scripts/apply_v255.py'
+      - 'trondheim-3d/scripts/apply_v256.py'
       - 'trondheim-3d/scripts/lamp_patch_v255.js'
 
 permissions:
@@ -69,6 +70,12 @@ jobs:
             python scripts/apply_v255.py index.html index.html
             echo 'v2.55 streetlight patch completed.'
           fi
+      - name: Install v2.56 building-aware placement (idempotent)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scripts/apply_v256.py
+          python scripts/apply_v256.py index.html index.html
       - name: Download mapped OSM street lamps into GeoJSON
         run: python scripts/export_lamps.py
       - name: Commit Trondheim 3D changes with safe retry
@@ -83,7 +90,7 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Update Trondheim 3D mapped streetlights'
+          git commit -m 'Update Trondheim 3D mapped streetlights and building-aware placements'
 
           # The repository may advance while the Overpass export is running.
           # Rebase on the latest remote branch, never force-push or overwrite it.
@@ -105,4 +112,3 @@ jobs:
           done
           echo '::error::GitHub continued to reject the update after four safe attempts. Existing remote code was not overwritten.'
           exit 1
-       
