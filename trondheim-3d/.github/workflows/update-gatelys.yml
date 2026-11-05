@@ -1,0 +1,44 @@
+name: Oppdater kartlagte gatelys (OSM til GeoJSON)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 0'   # hver søndag kl. 03:17 UTC
+  push:
+    paths:
+      - '.github/workflows/update-gatelys.yml'
+      - 'scripts/export_lamps.py'
+permissions:
+  contents: write
+jobs:
+  build-geojson:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Oppgrader publisert v2.54 uten å fjerne tog, buss eller båter
+        shell: bash
+        run: |
+          if grep -q 'LAMP_REGISTRY_URL' index.html; then
+            echo 'Lysmotor v2.55 finnes allerede'
+          elif grep -q 'name="app-version" content="2.54"' index.html; then
+            python scripts/apply_v255.py index.html index.html
+          else
+            echo 'Ukjent index-versjon: nekter å overskrive siden automatisk'
+            exit 1
+          fi
+      - name: Hent åpne OSM-lyspunkter fra Overpass
+        run: python scripts/export_lamps.py
+      - name: Publiser nytt GeoJSON hvis data er endret
+        run: |
+          git add index.html data/trondheim-gatelys.geojson
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Oppdater Trondheim gatelys fra OSM'
+            git push
+          else
+            echo 'Ingen endringer i OSM-punktdata'
+          fi
