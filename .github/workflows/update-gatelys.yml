@@ -1,4 +1,36 @@
-with:
+name: Oppdater kartlagte gatelys (OSM til GeoJSON)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 0' # Sundays at 03:17 UTC
+  push:
+    paths:
+      - '.github/workflows/update-gatelys.yml'
+      - 'trondheim-3d/scripts/export_lamps.py'
+      - 'trondheim-3d/scripts/apply_v255.py'
+      - 'trondheim-3d/scripts/lamp_patch_v255.js'
+
+permissions:
+  contents: write
+
+# Avoid simultaneous runs of THIS streetlight updater. Other repository
+# operations may still commit to main while we are downloading Overpass data.
+concurrency:
+  group: trondheim-streetlights-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-geojson:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: trondheim-3d
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
           persist-credentials: true
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -73,3 +105,4 @@ with:
           done
           echo '::error::GitHub continued to reject the update after four safe attempts. Existing remote code was not overwritten.'
           exit 1
+       
