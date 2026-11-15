@@ -1,0 +1,73 @@
+name: Trondheim 3D v2.58 - Favoritter
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/update-favoritter-v258.yml'
+      - 'trondheim-3d/scripts/apply_v258.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trondheim-v258-favorites-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  install-v258:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout current published HTML
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Safely patch the existing v2.57 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f trondheim-3d/index.html
+          test -f trondheim-3d/scripts/apply_v258.py
+          python3 trondheim-3d/scripts/apply_v258.py trondheim-3d/index.html
+          grep -q 'name="app-version" content="2.58"' trondheim-3d/index.html
+          grep -q 'V258_FAVORITES_BEGIN' trondheim-3d/index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('trondheim-3d/index.html').read_text(encoding='utf-8')
+          found=re.search(r'<script id="v258-favorites-script">(.*?)</script>',html,re.S)
+          assert found, 'favorites script is missing'
+          Path('/tmp/trondheim_v258_favorites.js').write_text(found.group(1),encoding='utf-8')
+          assert html.count('id="v258-favorites-script"')==1
+          assert html.count('id="v258-favorites-style"')==1
+          PY
+          node --check /tmp/trondheim_v258_favorites.js
+      - name: Commit only the existing app index.html
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- trondheim-3d/index.html
+          if git diff --cached --quiet; then
+            echo 'v2.58 was already installed; no new commit required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Trondheim 3D v2.58: locally saved favorites'
+          branch="${GITHUB_REF_NAME:-main}"
+          for attempt in 1 2 3 4; do
+            git fetch --no-tags origin "$branch"
+            if ! git rebase "origin/${branch}"; then
+              git rebase --abort || true
+              echo '::error::Concurrent change conflicts with v2.58. No files overwritten.'
+              exit 1
+            fi
+            if git push origin "HEAD:refs/heads/${branch}"; then
+              echo 'OK: v2.58 is committed. GitHub Pages will publish on its own.'
+              exit 0
+            fi
+            sleep "$((attempt * 3))"
+          done
+          echo '::error::Push rejected, no forced overwrite was attempted.'
+          exit 1
